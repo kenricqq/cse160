@@ -1,0 +1,3 @@
+run:
+    tsgo asgn1.ts --ignoreConfig
+    open asgn1.html
