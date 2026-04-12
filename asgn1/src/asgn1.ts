@@ -1,6 +1,3 @@
-// oxlint-disable-next-line typescript/triple-slash-reference
-/// <reference path="../lib/cuon-matrix-cse160.ts" />
-
 declare function initShaders(gl: WebGLRenderingContext, vshader: string, fshader: string): boolean
 
 type ShapeType = 'Circle' | 'Triangle' | 'Square'
@@ -28,8 +25,8 @@ function initShaders2(
 	return initShaders(gl as WebGLRenderingContext, vshader, fshader)
 }
 
-const SQUARE = new Float32Array([-0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.5, 0.5, 0.0, -0.5, 0.5, 0.0])
-const TRIANGLE = new Float32Array([-0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.0, 0.5, 0.0])
+const SQUARE = new Float32Array([-1, -1, 0.0, 1, -1, 0.0, 1, 1, 0.0, -1, 1, 0.0])
+const TRIANGLE = new Float32Array([-1, -1, 0.0, 1, -1, 0.0, 0.0, 1, 0.0])
 
 // ColoredPoint.js (c) 2012 matsuda
 // Vertex shader program
@@ -54,9 +51,9 @@ var FSHADER_SOURCE = `
 
 var shapeCfg: ShapeCfg = {
 	color: [0.5, 0.5, 0.5, 1.0],
-	size: 0.5,
+	size: 0.2,
 	type: 'Triangle',
-	segments: 5,
+	segments: 20,
 }
 
 var shapesList: Shape[] = []
@@ -72,7 +69,7 @@ class Shape {
 		const { color, type, size, segments } = cfg
 
 		this.position = pos
-		this.color = color
+		this.color = color.slice()
 		this.type = type
 		this.size = size
 
@@ -107,13 +104,7 @@ class Shape {
 		let glslVariables = connectVariablesToGLSL(gl)
 
 		let { a_Position } = glslVariables
-		// var a_Position = gl.getAttribLocation(gl.program, 'a_Position')
-		// if (a_Position < 0) {
-		// 	console.log('Failed to get the storage location of a_Position')
-		// 	return -1
-		// }
 
-		// gl.vertexAttrib3f(a_Position, this.position[0], this.position[1], 0.0)
 		gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0)
 		gl.enableVertexAttribArray(a_Position)
 
@@ -135,40 +126,29 @@ function renderAllShapes(gl: WebGL2RenderingContextWithProgram) {
 	}
 }
 
-function handleClicks(
-	e: MouseEvent,
-	gl: WebGL2RenderingContextWithProgram,
-	canvas: HTMLCanvasElement,
-) {
+function click(e: MouseEvent, gl: WebGL2RenderingContextWithProgram, canvas: HTMLCanvasElement) {
 	let x = e.clientX // x coordinate of a mouse pointer
 	let y = e.clientY // y coordinate of a mouse pointer
 
-	let rect = canvas.getBoundingClientRect()
-	x = (x - rect.left - canvas.width / 2) / (canvas.width / 2)
-	y = (canvas.height / 2 - (y - rect.top)) / (canvas.height / 2)
+	if (e.buttons === 1) {
+		let rect = canvas.getBoundingClientRect()
+		x = (x - rect.left - canvas.width / 2) / (canvas.width / 2)
+		y = (canvas.height / 2 - (y - rect.top)) / (canvas.height / 2)
 
-	const pos = [x, y] as [number, number]
-	console.log(x, y)
+		const pos = [x, y] as [number, number]
+		console.log(x, y)
 
-	// create Shape
-	const shape = new Shape(pos, shapeCfg)
-	shapesList.push(shape)
+		// create Shape
+		const shape = new Shape(pos, shapeCfg)
+		shapesList.push(shape)
 
-	// draw Shapes
-	renderAllShapes(gl)
+		// draw Shapes
+		renderAllShapes(gl)
+	}
 }
 
 function main() {
-	let canvas = document.getElementById('webgl')
-	if (!(canvas instanceof HTMLCanvasElement) || !canvas) {
-		return -1
-	}
-
-	let gl = getWebGL2Context(canvas)
-	if (!gl) {
-		console.log('Failed to get the rendering context for WebGL2')
-		return -1
-	}
+	let { canvas, gl } = setupWebGL()
 
 	if (!initShaders2(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
 		console.log('Failed to intialize shaders.')
@@ -178,7 +158,10 @@ function main() {
 	clearCanvas(gl)
 
 	canvas.addEventListener('mousedown', function (e) {
-		handleClicks(e, gl, canvas)
+		click(e, gl, canvas)
+	})
+	canvas.addEventListener('mousemove', function (e) {
+		click(e, gl, canvas)
 	})
 	// canvas.onmousedown = function (ev) {
 	// 	click(ev, gl, canvas, a_Position, u_FragColor)
@@ -234,7 +217,7 @@ function main() {
 	if (!(shapeSizeSlider instanceof HTMLInputElement)) return -1
 	shapeSizeSlider.addEventListener('mouseup', function () {
 		console.log(this.value)
-		shapeCfg.size = Number(this.value) / 20
+		shapeCfg.size = Number(this.value) / 50
 	})
 
 	// SHAPE SEGMENTS
@@ -251,11 +234,10 @@ function clearCanvas(gl: WebGL2RenderingContext) {
 	gl.clear(gl.COLOR_BUFFER_BIT)
 }
 
-function createCircle(sides: number): Float32Array {
-	console.log('side', sides)
+function createCircle(segments: number): Float32Array {
 	let vertices = []
-	for (let i = 0; i < sides; i++) {
-		const angle = (i / sides) * 2 * Math.PI
+	for (let i = 0; i < segments; i++) {
+		const angle = (i / segments) * 2 * Math.PI
 		const x = Math.sin(angle)
 		const y = Math.cos(angle)
 		vertices.push(x, y, 0)
@@ -264,104 +246,19 @@ function createCircle(sides: number): Float32Array {
 	return new Float32Array(vertices)
 }
 
-// function draw(gl: WebGL2RenderingContext, vertices: Float32Array, _size: number = shapeCfg.size) {
-// 	console.log(vertices)
+function setupWebGL() {
+	let canvas = document.getElementById('webgl')
+	if (!(canvas instanceof HTMLCanvasElement) || !canvas) {
+		throw new Error('Failed to get the canvas element')
+	}
 
-// 	if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-// 		console.log('Failed to intialize shaders.')
-// 		return -1
-// 	}
+	let gl = getWebGL2Context(canvas)
+	if (!gl) {
+		throw new Error('Failed to get the rendering context for WebGL2')
+	}
 
-// 	let vertexBuffer = gl.createBuffer()
-// 	if (!vertexBuffer) {
-// 		console.log('Failed to create Buffer')
-// 		return -1
-// 	}
-
-// 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-
-// 	var a_Position = gl.getAttribLocation(gl.program, 'a_Position')
-// 	if (a_Position < 0) {
-// 		console.log('Failed to get the storage location of a_Position')
-// 		return -1
-// 	}
-
-// 	gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0)
-// 	gl.enableVertexAttribArray(a_Position)
-
-// 	gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
-
-// 	let u_Color = gl.getUniformLocation(gl.program, 'u_Color')
-
-// 	gl.uniform3f(u_Color, ShapeColor[0], ShapeColor[1], ShapeColor[2])
-
-// 	gl.drawArrays(gl.TRIANGLE_FAN, 0, vertices.length / 3)
-// gl.drawArrays(gl.TRIANGLES, 0, square.length / 3)
-
-// Get the storage location of u_FragColor
-// var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor')
-// if (!u_FragColor) {
-// 	console.log('Failed to get the storage location of u_FragColor')
-// 	return -1
-// }
-// }
-
-// var g_points = [] // The array for the position of a mouse press
-// var g_colors = [] // The array to store the color of a point
-// function click(ev, gl, canvas, a_Position, u_FragColor) {
-// 	var x = ev.clientX // x coordinate of a mouse pointer
-// 	var y = ev.clientY // y coordinate of a mouse pointer
-// 	var rect = ev.target.getBoundingClientRect()
-
-// 	x = (x - rect.left - canvas.width / 2) / (canvas.width / 2)
-// 	y = (canvas.height / 2 - (y - rect.top)) / (canvas.height / 2)
-
-// 	// Store the coordinates to g_points array
-// 	g_points.push([x, y])
-// 	// Store the coordinates to g_points array
-// 	if (x >= 0.0 && y >= 0.0) {
-// 		// First quadrant
-// 		g_colors.push([1.0, 0.0, 0.0, 1.0]) // Red
-// 	} else if (x < 0.0 && y < 0.0) {
-// 		// Third quadrant
-// 		g_colors.push([0.0, 1.0, 0.0, 1.0]) // Green
-// 	} else {
-// 		// Others
-// 		g_colors.push([1.0, 1.0, 1.0, 1.0]) // White
-// 	}
-
-// 	// Clear <canvas>
-// 	gl.clear(gl.COLOR_BUFFER_BIT)
-
-// 	var len = g_points.length
-// 	for (var i = 0; i < len; i++) {
-// 		var xy = g_points[i]
-// 		var rgba = g_colors[i]
-
-// 		// Pass the position of a point to a_Position variable
-// 		gl.vertexAttrib3f(a_Position, xy[0], xy[1], 0.0)
-// 		// Pass the color of a point to u_FragColor variable
-// 		gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3])
-// 		// Draw
-// 		gl.drawArrays(gl.POINTS, 0, 1)
-// 	}
-// }
-//
-// let glslVariables = connectVariablesToGLSL(gl)
-
-// let { a_Position, u_FragColor } = glslVariables
-
-// function setupWebGL() {
-// 	let canvas = document.getElementById('webgl')
-
-// 	let gl = getWebGLContext(canvas)
-// 	if (!gl) {
-// 		console.log('Failed to get the rendering context for WebGL')
-// 		return -1
-// 	}
-
-// 	return { canvas, gl }
-// }
+	return { canvas, gl }
+}
 
 function connectVariablesToGLSL(gl: WebGL2RenderingContextWithProgram) {
 	// Get the storage location of a_Position
