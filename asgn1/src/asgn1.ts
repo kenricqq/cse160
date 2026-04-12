@@ -7,6 +7,7 @@ type ShapeCfg = {
 	size: number
 	type: ShapeType
 	segments: number
+	rotationAngle: number
 }
 
 type WebGL2RenderingContextWithProgram = WebGL2RenderingContext & {
@@ -14,7 +15,7 @@ type WebGL2RenderingContextWithProgram = WebGL2RenderingContext & {
 }
 
 function getWebGL2Context(canvas: HTMLCanvasElement): WebGL2RenderingContext | null {
-	return canvas.getContext('webgl2')
+	return canvas.getContext('webgl2', { preserveDrawingBuffer: true })
 }
 
 function initShaders2(
@@ -54,6 +55,7 @@ var shapeCfg: ShapeCfg = {
 	size: 0.2,
 	type: 'Triangle',
 	segments: 20,
+	rotationAngle: 0,
 }
 
 var shapesList: Shape[] = []
@@ -63,15 +65,17 @@ class Shape {
 	position
 	type
 	size
+	rotationAngle
 	vertices
 
 	constructor(pos: [number, number], cfg: ShapeCfg) {
-		const { color, type, size, segments } = cfg
+		const { color, type, size, segments, rotationAngle: rotation } = cfg
 
 		this.position = pos
 		this.color = color.slice()
 		this.type = type
 		this.size = size
+		this.rotationAngle = rotation
 
 		if (type === 'Circle') {
 			this.vertices = createCircle(segments)
@@ -84,13 +88,15 @@ class Shape {
 
 	render(gl: WebGL2RenderingContextWithProgram) {
 		const translated = new Float32Array(this.vertices)
+		const cos = Math.cos(this.rotationAngle)
+		const sin = Math.sin(this.rotationAngle)
 
 		for (let i = 0; i < translated.length; i += 3) {
-			translated[i] *= this.size
-			translated[i + 1] *= this.size
+			const x = translated[i] * this.size
+			const y = translated[i + 1] * this.size
 
-			translated[i] += this.position[0]
-			translated[i + 1] += this.position[1]
+			translated[i] = x * cos - y * sin + this.position[0]
+			translated[i + 1] = x * sin + y * cos + this.position[1]
 		}
 
 		let vertexBuffer = gl.createBuffer()
@@ -124,6 +130,8 @@ function renderAllShapes(gl: WebGL2RenderingContextWithProgram) {
 	for (const shape of shapesList) {
 		shape.render(gl)
 	}
+
+	console.log(shapesList)
 }
 
 function click(e: MouseEvent, gl: WebGL2RenderingContextWithProgram, canvas: HTMLCanvasElement) {
@@ -145,6 +153,64 @@ function click(e: MouseEvent, gl: WebGL2RenderingContextWithProgram, canvas: HTM
 		// draw Shapes
 		renderAllShapes(gl)
 	}
+}
+
+function generateCircleOutline(segments = 20, radius = 0.8, size = 0.08): Shape[] {
+	let shapes: Shape[] = []
+
+	for (let i = 0; i < segments; i++) {
+		const angle = (i / segments) * 2 * Math.PI
+		const x = Math.sin(angle) * radius
+		const y = Math.cos(angle) * radius
+		shapes.push(
+			new Shape([x, y], {
+				color: [
+					Math.cos(angle) * 0.5 + 0.5,
+					Math.cos(angle) * 0.7 + 0.1 * Math.random(),
+					Math.sin(angle) * 0.7 + 0.1 * Math.random(),
+					1.0,
+				],
+				size,
+				type: 'Triangle',
+				segments: 20,
+				rotationAngle: -angle,
+			}),
+		)
+	}
+
+	return shapes
+}
+
+function generateSquareLines(start: [number, number], end: [number, number], count = 10): Shape[] {
+	let shapes: Shape[] = []
+
+	for (let i = 0; i < count; i++) {
+		const t = count === 1 ? 0 : i / (count - 1)
+		const x = start[0] + (end[0] - start[0]) * t
+		const y = start[1] + (end[1] - start[1]) * t
+		shapes.push(
+			new Shape([x, y], {
+				color: [0.7, 0.7, 0.8, 1.0],
+				size: 1 / 20,
+				type: 'Square',
+				segments: 20,
+				rotationAngle: 0,
+			}),
+		)
+	}
+
+	return shapes
+}
+
+function getSpecialShape(): Shape[] {
+	return [
+		...generateCircleOutline(),
+		...generateSquareLines([-0.7, -0.7], [-0.7, 0]),
+		...generateSquareLines([-0.6, -0.4], [-0.2, 0], 6),
+		...generateSquareLines([-0.6, -0.4], [-0.2, -0.7], 6),
+		...generateSquareLines([-0.2, 0], [0.3, 0.0], 6),
+		...generateSquareLines([0, 0], [0, -0.7]),
+	]
 }
 
 function main() {
@@ -226,6 +292,25 @@ function main() {
 	segmentSlider.addEventListener('mouseup', function () {
 		console.log(this.value)
 		shapeCfg.segments = Number(this.value)
+	})
+
+	// SHAPE ROTATION
+	const rotationSlider = document.getElementById('rotation')
+	if (!(rotationSlider instanceof HTMLInputElement)) return -1
+	rotationSlider.addEventListener('mouseup', function () {
+		console.log(this.value)
+		shapeCfg.rotationAngle = (Number(this.value) / 20) * Math.PI * 2
+	})
+
+	// SPECAIL SHAPE
+	const specialShape = document.getElementById('special')
+	const refImg = document.getElementById('refImg')
+	if (!(refImg instanceof HTMLImageElement)) return -1
+	if (!(specialShape instanceof HTMLButtonElement)) return -1
+	specialShape.addEventListener('click', function () {
+		refImg.hidden = false
+		shapesList = getSpecialShape()
+		renderAllShapes(gl)
 	})
 }
 

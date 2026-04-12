@@ -13,6 +13,13 @@
 		<canvas id="webgl" width="400" height="400">
 			Please use a browser that supports "canvas"
 		</canvas>
+		<img id="refImg"
+		     src="./ref.jpg"
+		     alt="reference kt image"
+		     style="width: 400px; height: 400px; transform: rotate(-90deg);
+ object-fit: contain;"
+		     hidden
+		>
 
 		<div>
 			<button id="clearCanvas">Clear Canvas</button>
@@ -36,10 +43,18 @@
 		</div>
 
 		<div>
+			<h3>More Settings:</h3>
 			<label for="shapeSize">Shape Size</label>
 			<input type="range" id="shapeSize" name="shapeSize" min="1" max="20">
 			<label for="segmentCount">(Circles) Segment Count</label>
 			<input type="range" id="segmentCount" name="segmentCount" min="3" max="50">
+			<label for="rotation">Rotation</label>
+			<input type="range" id="rotation" name="rotation" min="-10" max="9">
+		</div>
+
+		<div>
+			<h3>KT Special:</h3>
+			<button id="special">Try it out!</button>
 		</div>
 	</body>
 </html>

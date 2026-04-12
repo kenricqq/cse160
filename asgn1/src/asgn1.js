@@ -1,6 +1,6 @@
 "use strict";
 function getWebGL2Context(canvas) {
-    return canvas.getContext('webgl2');
+    return canvas.getContext('webgl2', { preserveDrawingBuffer: true });
 }
 function initShaders2(gl, vshader, fshader) {
     return initShaders(gl, vshader, fshader);
@@ -30,7 +30,8 @@ var shapeCfg = {
     color: [0.5, 0.5, 0.5, 1.0],
     size: 0.2,
     type: 'Triangle',
-    segments: 5,
+    segments: 20,
+    rotationAngle: 0,
 };
 var shapesList = [];
 class Shape {
@@ -38,13 +39,15 @@ class Shape {
     position;
     type;
     size;
+    rotationAngle;
     vertices;
     constructor(pos, cfg) {
-        const { color, type, size, segments } = cfg;
+        const { color, type, size, segments, rotationAngle: rotation } = cfg;
         this.position = pos;
         this.color = color.slice();
         this.type = type;
         this.size = size;
+        this.rotationAngle = rotation;
         if (type === 'Circle') {
             this.vertices = createCircle(segments);
         }
@@ -57,11 +60,13 @@ class Shape {
     }
     render(gl) {
         const translated = new Float32Array(this.vertices);
+        const cos = Math.cos(this.rotationAngle);
+        const sin = Math.sin(this.rotationAngle);
         for (let i = 0; i < translated.length; i += 3) {
-            translated[i] *= this.size;
-            translated[i + 1] *= this.size;
-            translated[i] += this.position[0];
-            translated[i + 1] += this.position[1];
+            const x = translated[i] * this.size;
+            const y = translated[i + 1] * this.size;
+            translated[i] = x * cos - y * sin + this.position[0];
+            translated[i + 1] = x * sin + y * cos + this.position[1];
         }
         let vertexBuffer = gl.createBuffer();
         if (!vertexBuffer) {
@@ -84,6 +89,7 @@ function renderAllShapes(gl) {
     for (const shape of shapesList) {
         shape.render(gl);
     }
+    console.log(shapesList);
 }
 function click(e, gl, canvas) {
     let x = e.clientX; // x coordinate of a mouse pointer
@@ -100,6 +106,53 @@ function click(e, gl, canvas) {
         // draw Shapes
         renderAllShapes(gl);
     }
+}
+function generateCircleOutline(segments = 20, radius = 0.8, size = 0.08) {
+    let shapes = [];
+    for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * 2 * Math.PI;
+        const x = Math.sin(angle) * radius;
+        const y = Math.cos(angle) * radius;
+        shapes.push(new Shape([x, y], {
+            color: [
+                Math.cos(angle) * 0.5 + 0.5,
+                Math.cos(angle) * 0.7 + 0.1 * Math.random(),
+                Math.sin(angle) * 0.7 + 0.1 * Math.random(),
+                1.0,
+            ],
+            size,
+            type: 'Triangle',
+            segments: 20,
+            rotationAngle: -angle,
+        }));
+    }
+    return shapes;
+}
+function generateSquareLines(start, end, count = 10) {
+    let shapes = [];
+    for (let i = 0; i < count; i++) {
+        const t = count === 1 ? 0 : i / (count - 1);
+        const x = start[0] + (end[0] - start[0]) * t;
+        const y = start[1] + (end[1] - start[1]) * t;
+        shapes.push(new Shape([x, y], {
+            color: [0.7, 0.7, 0.8, 1.0],
+            size: 1 / 20,
+            type: 'Square',
+            segments: 20,
+            rotationAngle: 0,
+        }));
+    }
+    return shapes;
+}
+function getSpecialShape() {
+    return [
+        ...generateCircleOutline(),
+        ...generateSquareLines([-0.7, -0.7], [-0.7, 0]),
+        ...generateSquareLines([-0.6, -0.4], [-0.2, 0], 6),
+        ...generateSquareLines([-0.6, -0.4], [-0.2, -0.7], 6),
+        ...generateSquareLines([-0.2, 0], [0.3, 0.0], 6),
+        ...generateSquareLines([0, 0], [0, -0.7]),
+    ];
 }
 function main() {
     let { canvas, gl } = setupWebGL();
@@ -178,16 +231,35 @@ function main() {
         console.log(this.value);
         shapeCfg.segments = Number(this.value);
     });
+    // SHAPE ROTATION
+    const rotationSlider = document.getElementById('rotation');
+    if (!(rotationSlider instanceof HTMLInputElement))
+        return -1;
+    rotationSlider.addEventListener('mouseup', function () {
+        console.log(this.value);
+        shapeCfg.rotationAngle = (Number(this.value) / 20) * Math.PI * 2;
+    });
+    // SPECAIL SHAPE
+    const specialShape = document.getElementById('special');
+    const refImg = document.getElementById('refImg');
+    if (!(refImg instanceof HTMLImageElement))
+        return -1;
+    if (!(specialShape instanceof HTMLButtonElement))
+        return -1;
+    specialShape.addEventListener('click', function () {
+        refImg.hidden = false;
+        shapesList = getSpecialShape();
+        renderAllShapes(gl);
+    });
 }
 function clearCanvas(gl) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 }
-function createCircle(sides) {
-    console.log('side', sides);
+function createCircle(segments) {
     let vertices = [];
-    for (let i = 0; i < sides; i++) {
-        const angle = (i / sides) * 2 * Math.PI;
+    for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * 2 * Math.PI;
         const x = Math.sin(angle);
         const y = Math.cos(angle);
         vertices.push(x, y, 0);
