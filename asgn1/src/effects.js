@@ -17,10 +17,7 @@ function polarToCartesian(angle, radius) {
     return [Math.sin(angle) * radius, Math.cos(angle) * radius];
 }
 function hideReferenceImage() {
-    const refImg = document.getElementById('refImg');
-    if (refImg instanceof HTMLImageElement) {
-        refImg.hidden = true;
-    }
+    getImage('refImg').hidden = true;
 }
 function setActiveEffectButton(buttonId) {
     document.querySelectorAll('.effect-button').forEach((button) => {
@@ -44,6 +41,7 @@ function stopLoadingEffect(clearScene = false, statusMessage = 'Choose a loading
     }
     updateEffectStatus(statusMessage);
 }
+// oxlint-disable-next-line no-unused-vars
 function startLoadingEffect(gl, buttonId, label, effect) {
     stopLoadingEffect(false, `Looping ${label}. Click another effect to swap it out.`);
     hideReferenceImage();
@@ -55,6 +53,7 @@ function startLoadingEffect(gl, buttonId, label, effect) {
     };
     activeAnimationFrame = requestAnimationFrame(animate);
 }
+// oxlint-disable-next-line no-unused-vars
 function createDNATwistLoader(time) {
     const shapes = [];
     const rows = 14;
@@ -81,6 +80,7 @@ function createDNATwistLoader(time) {
     }
     return shapes;
 }
+// oxlint-disable-next-line no-unused-vars
 function createInfinityTrailLoader(time) {
     const shapes = [];
     const dots = 28;
@@ -105,6 +105,7 @@ function createInfinityTrailLoader(time) {
     shapes.push(createAnimatedShape(back, [0.45, 0.88, 1.0, 1.0], 0.032, 'Triangle', accentAngle - Math.PI / 2));
     return shapes;
 }
+// oxlint-disable-next-line no-unused-vars
 function createCircleIrisLoader(time) {
     const shapes = [];
     const wedgeCount = 16;

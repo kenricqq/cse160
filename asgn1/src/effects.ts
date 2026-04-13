@@ -27,10 +27,7 @@ function polarToCartesian(angle: number, radius: number): [number, number] {
 }
 
 function hideReferenceImage() {
-	const refImg = document.getElementById('refImg')
-	if (refImg instanceof HTMLImageElement) {
-		refImg.hidden = true
-	}
+	getImage('refImg').hidden = true
 }
 
 function setActiveEffectButton(buttonId: string | null) {
@@ -64,6 +61,7 @@ function stopLoadingEffect(
 	updateEffectStatus(statusMessage)
 }
 
+// oxlint-disable-next-line no-unused-vars
 function startLoadingEffect(
 	gl: WebGL2RenderingContextWithProgram,
 	buttonId: string,
@@ -83,6 +81,7 @@ function startLoadingEffect(
 	activeAnimationFrame = requestAnimationFrame(animate)
 }
 
+// oxlint-disable-next-line no-unused-vars
 function createDNATwistLoader(time: number): Shape[] {
 	const shapes: Shape[] = []
 	const rows: number = 14
@@ -140,6 +139,7 @@ function createDNATwistLoader(time: number): Shape[] {
 	return shapes
 }
 
+// oxlint-disable-next-line no-unused-vars
 function createInfinityTrailLoader(time: number): Shape[] {
 	const shapes: Shape[] = []
 	const dots = 28
@@ -187,6 +187,7 @@ function createInfinityTrailLoader(time: number): Shape[] {
 	return shapes
 }
 
+// oxlint-disable-next-line no-unused-vars
 function createCircleIrisLoader(time: number): Shape[] {
 	const shapes: Shape[] = []
 	const wedgeCount = 16
