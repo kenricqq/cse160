@@ -19,10 +19,8 @@ var VSHADER_SOURCE = `
 // Fragment shader program
 var FSHADER_SOURCE = `
 	precision mediump float;
-	// uniform vec4 u_FragColor; // uniform変数
 	uniform vec3 u_Color;
 	void main() {
-	  // gl_FragColor = u_FragColor;
 	  gl_FragColor = vec4(u_Color, 1.0);
 	}
 `;
@@ -89,21 +87,19 @@ function renderAllShapes(gl) {
     for (const shape of shapesList) {
         shape.render(gl);
     }
-    console.log(shapesList);
 }
 function click(e, gl, canvas) {
-    let x = e.clientX; // x coordinate of a mouse pointer
-    let y = e.clientY; // y coordinate of a mouse pointer
+    let x = e.clientX;
+    let y = e.clientY;
     if (e.buttons === 1) {
+        stopLoadingEffect(false, 'Manual drawing mode ready.');
+        hideReferenceImage();
         let rect = canvas.getBoundingClientRect();
         x = (x - rect.left - canvas.width / 2) / (canvas.width / 2);
         y = (canvas.height / 2 - (y - rect.top)) / (canvas.height / 2);
         const pos = [x, y];
-        console.log(x, y);
-        // create Shape
         const shape = new Shape(pos, shapeCfg);
         shapesList.push(shape);
-        // draw Shapes
         renderAllShapes(gl);
     }
 }
@@ -167,14 +163,12 @@ function main() {
     canvas.addEventListener('mousemove', function (e) {
         click(e, gl, canvas);
     });
-    // canvas.onmousedown = function (ev) {
-    // 	click(ev, gl, canvas, a_Position, u_FragColor)
-    // }
     const clearCanvasBtn = document.getElementById('clearCanvas');
     if (!(clearCanvasBtn instanceof HTMLButtonElement))
         return -1;
     clearCanvasBtn.addEventListener('click', function () {
-        shapesList = [];
+        stopLoadingEffect(true, 'Canvas cleared.');
+        hideReferenceImage();
         clearCanvas(gl);
     });
     // DRAWING MODE
@@ -220,7 +214,6 @@ function main() {
     if (!(shapeSizeSlider instanceof HTMLInputElement))
         return -1;
     shapeSizeSlider.addEventListener('mouseup', function () {
-        console.log(this.value);
         shapeCfg.size = Number(this.value) / 50;
     });
     // SHAPE SEGMENTS
@@ -228,7 +221,6 @@ function main() {
     if (!(segmentSlider instanceof HTMLInputElement))
         return -1;
     segmentSlider.addEventListener('mouseup', function () {
-        console.log(this.value);
         shapeCfg.segments = Number(this.value);
     });
     // SHAPE ROTATION
@@ -236,10 +228,9 @@ function main() {
     if (!(rotationSlider instanceof HTMLInputElement))
         return -1;
     rotationSlider.addEventListener('mouseup', function () {
-        console.log(this.value);
         shapeCfg.rotationAngle = (Number(this.value) / 20) * Math.PI * 2;
     });
-    // SPECAIL SHAPE
+    // SPECIAL SHAPE
     const specialShape = document.getElementById('special');
     const refImg = document.getElementById('refImg');
     if (!(refImg instanceof HTMLImageElement))
@@ -247,9 +238,30 @@ function main() {
     if (!(specialShape instanceof HTMLButtonElement))
         return -1;
     specialShape.addEventListener('click', function () {
+        stopLoadingEffect(false, 'KT Special loaded.');
         refImg.hidden = false;
         shapesList = getSpecialShape();
         renderAllShapes(gl);
+    });
+    // AWESOMENESS: SPECIAL LOADER EFFECTS
+    const loadingEffects = [
+        { id: 'dnaTwist', label: 'DNA Twist', effect: createDNATwistLoader },
+        { id: 'infinityTrail', label: 'Infinity Trail', effect: createInfinityTrailLoader },
+        { id: 'circleIris', label: 'Circle Iris', effect: createCircleIrisLoader },
+    ];
+    for (const { id, label, effect } of loadingEffects) {
+        const button = document.getElementById(id);
+        if (!(button instanceof HTMLButtonElement))
+            return -1;
+        button.addEventListener('click', function () {
+            startLoadingEffect(gl, id, label, effect);
+        });
+    }
+    const stopEffects = document.getElementById('stopEffects');
+    if (!(stopEffects instanceof HTMLButtonElement))
+        return -1;
+    stopEffects.addEventListener('click', function () {
+        stopLoadingEffect(false, 'Animation stopped.');
     });
 }
 function clearCanvas(gl) {
@@ -278,18 +290,10 @@ function setupWebGL() {
     return { canvas, gl };
 }
 function connectVariablesToGLSL(gl) {
-    // Get the storage location of a_Position
     var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
     if (a_Position < 0) {
         console.log('Failed to get the storage location of a_Position');
         throw new Error('Failed to get the storage location of a_Position');
     }
-    // Get the storage location of u_FragColor
-    // var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor')
-    // if (!u_FragColor) {
-    // 	console.log('Failed to get the storage location of u_FragColor')
-    // 	throw new Error('Failed to get the storage location of u_FragColor')
-    // }
-    // return { a_Position, u_FragColor }
     return { a_Position };
 }
