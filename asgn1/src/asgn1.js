@@ -191,24 +191,15 @@ function main() {
         shapeCfg.type = 'Circle';
     });
     // SHAPE COLORS
-    const redSlider = document.getElementById('redSlider');
-    if (!(redSlider instanceof HTMLInputElement))
-        return -1;
-    redSlider.addEventListener('mouseup', function () {
-        shapeCfg.color[0] = Number(this.value) / 20;
-    });
-    const greenSlider = document.getElementById('greenSlider');
-    if (!(greenSlider instanceof HTMLInputElement))
-        return -1;
-    greenSlider.addEventListener('mouseup', function () {
-        shapeCfg.color[1] = Number(this.value) / 20;
-    });
-    const blueSlider = document.getElementById('blueSlider');
-    if (!(blueSlider instanceof HTMLInputElement))
-        return -1;
-    blueSlider.addEventListener('mouseup', function () {
-        shapeCfg.color[2] = Number(this.value) / 20;
-    });
+    const colorSliders = ['redSlider', 'blueSlider', 'greenSlider'];
+    for (const [i, id] of colorSliders.entries()) {
+        const slider = document.getElementById(id);
+        if (!(slider instanceof HTMLInputElement))
+            return -1;
+        slider.addEventListener('mouseup', function () {
+            shapeCfg.color[i] = Number(this.value) / 20;
+        });
+    }
     // SHAPE SIZE
     const shapeSizeSlider = document.getElementById('shapeSize');
     if (!(shapeSizeSlider instanceof HTMLInputElement))
