@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Change a point color</title>
+		<script src="../lib/webgl-utils.js"></script>
+		<script src="../lib/webgl-debug.js"></script>
+		<script src="../lib/cuon-utils.js"></script>
+		<script src="effects.js"></script>
+		<script src="asgn1.js"></script>
+		<style>
+			body {
+				margin: 1rem;
+				font-family: 'Trebuchet MS', 'Gill Sans', sans-serif;
+			}
+			
+			canvas,
+			#refImg {
+				display: block;
+				margin-bottom: 1rem;
+			}
+			
+			.control-panel {
+				max-width: 900px;
+			}
+			
+			.control-group {
+				padding: 0.8rem 1rem;
+				margin: 0 0 0.75rem;
+				border-radius: 0.3rem;
+				border: 1px solid #000000;
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+			}
+			
+			h4 {
+				margin: 0 0 0.5rem;
+			}
+			
+			button {
+				margin: 0.1rem 0.35rem 0.1rem 0;
+			}
+			
+			label {
+				margin-right: 0.3rem;
+			}
+			
+			input[type='range'] {
+				margin: 0 0.75rem 0 0;
+				vertical-align: middle;
+			}
+			
+			#effectStatus {
+				margin: 0.6rem 0 0;
+			}
+			
+			[hidden] {
+				display: none !important;
+			}
+			
+			@media (prefers-reduced-motion: reduce) {
+				button {
+					transition: none;
+				}
+			}
+		</style>
+	</head>
+
+	<body onload="main()">
+		<canvas id="webgl" width="400" height="400">
+			Please use a browser that supports "canvas"
+		</canvas>
+		<img id="refImg"
+		     src="./ref.jpg"
+		     alt="reference kt image"
+		     style="width: 400px; height: 400px; transform: rotate(-90deg); object-fit: contain;"
+		     hidden
+		>
+
+		<div class="control-panel">
+			<div class="control-group">
+				<button id="clearCanvas">Clear Canvas</button>
+			</div>
+
+			<div class="control-group">
+				<h4>Drawing Mode:</h4>
+				<button id="square">Squares</button>
+				<button id="triangle">Triangles</button>
+				<button id="circle">Circles</button>
+			</div>
+
+			<div class="control-group">
+				<h4>Shape Color:</h4>
+				<label for="redSlider">Red</label>
+				<input type="range" id="redSlider" name="redSlider" min="0" max="20">
+				<label for="greenSlider">Green</label>
+				<input type="range" id="greenSlider" name="greenSlider" min="0" max="20">
+				<label for="blueSlider">Blue</label>
+				<input type="range" id="blueSlider" name="blueSlider" min="0" max="20">
+			</div>
+
+			<div class="control-group">
+				<h4>More Settings:</h4>
+				<label for="shapeSize">Shape Size</label>
+				<input type="range" id="shapeSize" name="shapeSize" min="1" max="20">
+				<label for="segmentCount">(Circles) Segment Count</label>
+				<input type="range" id="segmentCount" name="segmentCount" min="3" max="50">
+				<label for="rotation">Rotation</label>
+				<input type="range" id="rotation" name="rotation" min="-10" max="9">
+			</div>
+
+			<div class="control-group">
+				<h4>KT Special:</h4>
+				<button id="special">Try it out!</button>
+			</div>
+
+			<div class="control-group">
+				<h4>Awesomeness!</h4>
+				<button id="dnaTwist" class="effect-button">DNA Twist</button>
+				<button id="infinityTrail" class="effect-button">Infinity Trail</button>
+				<button id="circleIris" class="effect-button">Circle Iris</button>
+				<button id="stopEffects" class="stop-button">Stop</button>
+				<p id="effectStatus">Choose a loading effect to loop it on the canvas.</p>
+			</div>
+		</div>
+	</body>
+</html>
