@@ -7,9 +7,6 @@ function initShaders2(gl, vshader, fshader) {
 }
 const SQUARE = new Float32Array([-1, -1, 0.0, 1, -1, 0.0, 1, 1, 0.0, -1, 1, 0.0]);
 const TRIANGLE = new Float32Array([-1, -1, 0.0, 1, -1, 0.0, 0.0, 1, 0.0]);
-const FULL_ROTATION = Math.PI * 2;
-const CIRCLE_CACHE = new Map();
-let renderState = null;
 // ColoredPoint.js (c) 2012 matsuda
 // Vertex shader program
 var VSHADER_SOURCE = `
@@ -37,46 +34,72 @@ var currShape = {
 var shapesList = [];
 class Shape {
     color;
+    position;
+    type;
+    size;
+    rotationAngle;
     vertices;
-    vertexCount;
     constructor(pos, cfg) {
-        const { color, type, size, segments, rotationAngle } = cfg;
+        const { color, type, size, segments, rotationAngle: rotation } = cfg;
+        this.position = pos;
         this.color = color.slice();
-        this.vertices = transformVertices(getShapeVertices(type, segments), pos, size, rotationAngle);
-        this.vertexCount = this.vertices.length / 3;
+        this.type = type;
+        this.size = size;
+        this.rotationAngle = rotation;
+        if (type === 'Circle') {
+            this.vertices = createCircle(segments);
+        }
+        else if (type === 'Square') {
+            this.vertices = SQUARE;
+        }
+        else {
+            this.vertices = TRIANGLE;
+        }
     }
     render(gl) {
-        const { u_Color } = getRenderState();
-        gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);
+        const translated = new Float32Array(this.vertices);
+        const cos = Math.cos(this.rotationAngle);
+        const sin = Math.sin(this.rotationAngle);
+        for (let i = 0; i < translated.length; i += 3) {
+            const x = translated[i] * this.size;
+            const y = translated[i + 1] * this.size;
+            translated[i] = x * cos - y * sin + this.position[0];
+            translated[i + 1] = x * sin + y * cos + this.position[1];
+        }
+        let vertexBuffer = gl.createBuffer();
+        if (!vertexBuffer) {
+            console.log('Failed to create Buffer');
+            return -1;
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        let { a_Position, u_Color } = connectVariablesToGLSL(gl);
+        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(a_Position);
+        gl.bufferData(gl.ARRAY_BUFFER, translated, gl.STATIC_DRAW);
         gl.uniform3f(u_Color, this.color[0], this.color[1], this.color[2]);
-        gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vertexCount);
+        gl.drawArrays(gl.TRIANGLE_FAN, 0, translated.length / 3);
     }
 }
 function renderAllShapes(gl) {
     clearCanvas(gl);
-    const { a_Position, vertexBuffer } = getRenderState();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(a_Position);
     for (const shape of shapesList) {
         shape.render(gl);
     }
 }
 function click(e, gl, canvas) {
-    if (e.buttons !== 1) {
-        return;
+    if (e.buttons === 1) {
+        stopLoadingEffect(false, 'Manual drawing mode ready.');
+        hideReferenceImage();
+        const pos = getCanvasPosition(e, canvas);
+        const shape = new Shape(pos, currShape);
+        shapesList.push(shape);
+        renderAllShapes(gl);
     }
-    stopLoadingEffect(false, 'Manual drawing mode ready.');
-    hideReferenceImage();
-    const pos = getCanvasPosition(e, canvas);
-    const shape = new Shape(pos, currShape);
-    shapesList.push(shape);
-    renderAllShapes(gl);
 }
 function generateCircleOutline(segments = 20, radius = 0.8, size = 0.08) {
     let shapes = [];
     for (let i = 0; i < segments; i++) {
-        const angle = (i / segments) * FULL_ROTATION;
+        const angle = (i / segments) * 2 * Math.PI;
         const x = Math.sin(angle) * radius;
         const y = Math.cos(angle) * radius;
         shapes.push(new Shape([x, y], {
@@ -120,13 +143,13 @@ function getSpecialShape() {
         ...generateSquareLines([0, 0], [0, -0.7]),
     ];
 }
+// oxlint-disable-next-line no-unused-vars
 function main() {
     let { canvas, gl } = setupWebGL();
     if (!initShaders2(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
         console.log('Failed to intialize shaders.');
         return -1;
     }
-    renderState = connectVariablesToGLSL(gl);
     clearCanvas(gl);
     canvas.addEventListener('mousedown', function (e) {
         click(e, gl, canvas);
@@ -169,7 +192,7 @@ function main() {
     // SHAPE ROTATION
     const rotationSlider = getInput('rotation');
     rotationSlider.addEventListener('mouseup', function () {
-        currShape.rotationAngle = (Number(this.value) / 20) * FULL_ROTATION;
+        currShape.rotationAngle = (Number(this.value) / 20) * Math.PI * 2;
     });
     // SPECIAL SHAPE
     const specialShape = getButton('special');
@@ -203,41 +226,14 @@ function clearCanvas(gl) {
     gl.clear(gl.COLOR_BUFFER_BIT);
 }
 function createCircle(segments) {
-    const cachedCircle = CIRCLE_CACHE.get(segments);
-    if (cachedCircle) {
-        return cachedCircle;
-    }
-    const vertices = new Float32Array(segments * 3);
+    let vertices = [];
     for (let i = 0; i < segments; i++) {
-        const angle = (i / segments) * FULL_ROTATION;
-        const index = i * 3;
-        vertices[index] = Math.sin(angle);
-        vertices[index + 1] = Math.cos(angle);
-        vertices[index + 2] = 0;
+        const angle = (i / segments) * 2 * Math.PI;
+        const x = Math.sin(angle);
+        const y = Math.cos(angle);
+        vertices.push(x, y, 0);
     }
-    CIRCLE_CACHE.set(segments, vertices);
-    return vertices;
-}
-function getShapeVertices(type, segments) {
-    if (type === 'Circle') {
-        return createCircle(segments);
-    }
-    if (type === 'Square') {
-        return SQUARE;
-    }
-    return TRIANGLE;
-}
-function transformVertices(vertices, position, size, rotationAngle) {
-    const translated = new Float32Array(vertices.length);
-    const cos = Math.cos(rotationAngle);
-    const sin = Math.sin(rotationAngle);
-    for (let i = 0; i < translated.length; i += 3) {
-        const x = vertices[i] * size;
-        const y = vertices[i + 1] * size;
-        translated[i] = x * cos - y * sin + position[0];
-        translated[i + 1] = x * sin + y * cos + position[1];
-    }
-    return translated;
+    return new Float32Array(vertices);
 }
 function setupWebGL() {
     let canvas = document.getElementById('webgl');
@@ -251,26 +247,13 @@ function setupWebGL() {
     return { canvas, gl };
 }
 function connectVariablesToGLSL(gl) {
-    const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+    let a_Position = gl.getAttribLocation(gl.program, 'a_Position');
     if (a_Position < 0) {
         console.log('Failed to get the storage location of a_Position');
         throw new Error('Failed to get the storage location of a_Position');
     }
-    const u_Color = gl.getUniformLocation(gl.program, 'u_Color');
-    if (!u_Color) {
-        throw new Error('Failed to get the storage location of u_Color');
-    }
-    const vertexBuffer = gl.createBuffer();
-    if (!vertexBuffer) {
-        throw new Error('Failed to create buffer');
-    }
-    return { a_Position, u_Color, vertexBuffer };
-}
-function getRenderState() {
-    if (!renderState) {
-        throw new Error('Render state has not been initialized');
-    }
-    return renderState;
+    let u_Color = gl.getUniformLocation(gl.program, 'u_Color');
+    return { a_Position, u_Color };
 }
 function getCanvasPosition(e, canvas) {
     let x = e.clientX;

@@ -1,9 +1,8 @@
 "use strict";
 let activeAnimationFrame = null;
 function createAnimatedShape(pos, color, size, type = 'Circle', rotationAngle = 0, segments = 24) {
-    var _a, _b, _c, _d;
     return new Shape(pos, {
-        color: [(_a = color[0]) !== null && _a !== void 0 ? _a : 1.0, (_b = color[1]) !== null && _b !== void 0 ? _b : 1.0, (_c = color[2]) !== null && _c !== void 0 ? _c : 1.0, (_d = color[3]) !== null && _d !== void 0 ? _d : 1.0],
+        color: [color[0] ?? 1.0, color[1] ?? 1.0, color[2] ?? 1.0, color[3] ?? 1.0],
         size,
         type,
         segments,
