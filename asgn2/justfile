@@ -1,0 +1,3 @@
+run:
+    tsgo -p tsconfig.json
+    open src/BlockyAnimal.html
