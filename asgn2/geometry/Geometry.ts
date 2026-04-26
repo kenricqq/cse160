@@ -24,22 +24,22 @@ class Geometry {
 	}
 
 	translate(x: number, y: number, z: number) {
-		this.translationMatrix.setTranslate(x, y, z)
+		this.translationMatrix.translate(x, y, z)
 	}
 
 	rotateX(angle: number) {
-		this.rotationMatrix.setRotate(angle, 1, 0, 0)
+		this.rotationMatrix.rotate(angle, 1, 0, 0)
 	}
 
 	rotateY(angle: number) {
-		this.rotationMatrix.setRotate(angle, 0, 1, 0)
+		this.rotationMatrix.rotate(angle, 0, 1, 0)
 	}
 
 	rotateZ(angle: number) {
-		this.rotationMatrix.setRotate(angle, 0, 0, 1)
+		this.rotationMatrix.rotate(angle, 0, 0, 1)
 	}
 
 	scale(x: number, y: number, z: number) {
-		this.scaleMatrix.setScale(x, y, z)
+		this.scaleMatrix.scale(x, y, z)
 	}
 }

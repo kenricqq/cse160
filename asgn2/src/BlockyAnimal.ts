@@ -13,12 +13,12 @@ var VSHADER_SOURCE = `
 	attribute vec4 a_Color;
 	varying vec4 v_Color;
 
-	// uniform mat4 u_GlobalRotation;
+	uniform mat4 u_GlobalRotation;
 	uniform mat4 u_ModelMatrix;
 
 	void main() {
-	  // gl_Position = u_GlobalRotation * u_ModelMatrix * a_Position;
-	  gl_Position = u_ModelMatrix * a_Position;
+	  gl_Position = u_GlobalRotation * u_ModelMatrix * a_Position;
+	  // gl_Position = u_ModelMatrix * a_Position;
 	  v_Color = a_Color;
 	}
 `
@@ -80,19 +80,23 @@ function initVertexBuffers(gl: WebGL2RenderingContextWithProgram, shape: Geometr
 	return n
 }
 
-function animate(gl: WebGL2RenderingContextWithProgram) {
+function renderScene(gl: WebGL2RenderingContextWithProgram) {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	gAnimalGlobalRotation += 1
 	for (let s of shapes) {
-		s.rotateY(gAnimalGlobalRotation)
 		draw(gl, s)
 	}
+}
 
-	requestAnimationFrame(() => animate(gl))
+function tick(gl: WebGL2RenderingContextWithProgram) {
+	// gAnimalGlobalRotation += 1
+	renderScene(gl)
+	requestAnimationFrame(() => tick(gl))
 }
 
 function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry) {
+	shape.modelMatrix.setIdentity()
+
 	// Write the positions of vertices to a vertex shader
 	let n = initVertexBuffers(gl, shape)
 	if (n < 0) {
@@ -113,6 +117,15 @@ function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry) {
 	}
 	gl.uniformMatrix4fv(u_ModelMatrix, false, shape.modelMatrix.elements)
 
+	let u_GlobalRotation = gl.getUniformLocation(gl.program, 'u_GlobalRotation')
+	if (!u_GlobalRotation) {
+		console.log('Failed to get the storage location of u_ModelMatrix')
+		return
+	}
+	let globalRotMat = new Matrix4()
+	globalRotMat.setRotate(gAnimalGlobalRotation, 0, 1, 0)
+	gl.uniformMatrix4fv(u_GlobalRotation, false, globalRotMat.elements)
+
 	// Pass the model matrix to the vertex shader
 	// let u_GlobalRotation = gl.getUniformLocation(gl.program, 'u_GlobalRotation')
 	// if (!gAnimalGlobalRotation) {
@@ -123,8 +136,6 @@ function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry) {
 
 	gl.drawArrays(gl.TRIANGLES, 0, n)
 	// gl.drawArrays(gl.LINE_LOOP, 0, n) // wireframe}
-
-	shape.modelMatrix.setIdentity()
 }
 
 // oxlint-disable-next-line no-unused-vars
@@ -141,19 +152,40 @@ function main() {
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+	// Event Listeners
+	const rotationSlider = getInput('rotationSlider')
+	rotationSlider.addEventListener('mouseup', function () {
+		gAnimalGlobalRotation = Number(this.value) * 10
+	})
+
 	let cube1 = new Cube()
-	cube1.rotateY(45)
-	cube1.translate(0, 0.2, 0)
+	cube1.rotateY(135)
+	cube1.translate(0, -0.2, 0)
+	cube1.scale(0.5, 0.5, 0.5)
 
 	shapes.push(cube1)
 
-	let tri1 = new Triangle()
-	tri1.translate(0, -0.2, 0)
-	tri1.rotateY(45)
+	// let cube2 = new Cube()
+	// cube2.translate(0, -0.2, 0)
+	// cube2.rotateX(30)
+	// cube2.rotateY(15)
+	// cube2.scale(0.5, 0.5, 1.3)
 
-	shapes.push(tri1)
+	// shapes.push(cube2)
 
-	animate(gl)
+	// let tri1 = new Triangle()
+	// tri1.translate(0, -0.2, 0)
+	// tri1.rotateY(45)
+
+	// shapes.push(tri1)
+
+	tick(gl)
+}
+
+function getInput(id: string): HTMLInputElement {
+	const input = document.getElementById(id)
+	if (!(input instanceof HTMLInputElement)) throw new Error(`Failed to get input with id ${id}`)
+	return input
 }
 
 window.addEventListener('load', main)
