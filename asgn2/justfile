@@ -1,3 +1,6 @@
 run:
     tsgo -p tsconfig.json
     open src/BlockyAnimal.html
+
+dev:
+    bash -c 'trap "kill $$(jobs -p) 2>/dev/null" EXIT; tsgo -p tsconfig.json --watch & live-server . --open=src/BlockyAnimal.html'

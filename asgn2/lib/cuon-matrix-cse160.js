@@ -1,4 +1,5 @@
 "use strict";
+// oxlint-disable no-unused-vars
 // cuon-matrix.js (c) 2012 kanda and matsuda
 /**
  * This is a class treating 4x4 matrix.
