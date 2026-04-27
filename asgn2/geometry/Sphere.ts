@@ -1,5 +1,6 @@
 // oxlint-disable typescript/no-extraneous-class
 // oxlint-disable no-unused-vars
+// Sphere primitive
 class Sphere extends Geometry {
 	vertices
 
@@ -8,6 +9,7 @@ class Sphere extends Geometry {
 		this.positionSize = 3
 		this.colorSize = 3
 		this.floatsPerVertex = 6
+
 		const vertices: number[] = []
 		const pushVertex = (theta: number, phi: number) => {
 			const radiusAtTheta = 0.5 * Math.sin(theta)
@@ -20,6 +22,8 @@ class Sphere extends Geometry {
 				1,
 			)
 		}
+
+		// Latitude bands
 		for (let row = 0; row < rows; row++) {
 			const theta0 = (row / rows) * Math.PI,
 				theta1 = ((row + 1) / rows) * Math.PI
@@ -34,6 +38,7 @@ class Sphere extends Geometry {
 				pushVertex(theta0, phi1)
 			}
 		}
+
 		this.vertices = new Float32Array(vertices)
 	}
 }

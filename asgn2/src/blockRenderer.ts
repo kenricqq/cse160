@@ -10,6 +10,7 @@ export const FSHADER_SOURCE = `
 	void main() { gl_FragColor = u_FragColor; }
 `
 
+// Cube shading
 const FACE_SHADE = [0.82, 0.7, 0.95, 0.78, 1.08, 0.66]
 
 function extractPositions(source: Float32Array) {
@@ -18,6 +19,7 @@ function extractPositions(source: Float32Array) {
 	return new Float32Array(positions)
 }
 
+// Shape renderer
 export class BlockRenderer {
 	private readonly cubeBuffer: WebGLBuffer
 	private readonly sphereBuffer: WebGLBuffer
@@ -43,13 +45,16 @@ export class BlockRenderer {
 			!sphereBuffer
 		)
 			throw new Error('Failed to init renderer')
+
 		this.modelMatrix = modelMatrix
 		this.globalRotation = globalRotation
 		this.fragmentColor = fragmentColor
 		this.cubeBuffer = cubeBuffer
 		this.sphereBuffer = sphereBuffer
+
 		const sphere = new Sphere()
 		this.sphereVertexCount = sphere.vertices.length / 6
+
 		this.upload(cubeBuffer, extractPositions(new Cube().vertices))
 		this.upload(sphereBuffer, extractPositions(sphere.vertices))
 	}
@@ -60,6 +65,7 @@ export class BlockRenderer {
 	box(base: Matrix4, color: Vec4, translate: Vec3, scale: Vec3, rotateZ = 0) {
 		this.boxRot(base, color, translate, scale, [0, 0, rotateZ])
 	}
+
 	sphere(base: Matrix4, color: Vec4, translate: Vec3, scale: Vec3, rotateZ = 0) {
 		this.drawShape(this.sphereBuffer, this.sphereVertexCount, base, color, translate, scale, [
 			0,
@@ -76,6 +82,7 @@ export class BlockRenderer {
 		this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW)
 	}
 
+	// Draw primitive
 	private drawShape(
 		buffer: WebGLBuffer,
 		count: number,
@@ -91,10 +98,12 @@ export class BlockRenderer {
 		if (rotation[1]) model.rotate(rotation[1], 0, 1, 0)
 		if (rotation[2]) model.rotate(rotation[2], 0, 0, 1)
 		model.scale(scale[0], scale[1], scale[2])
+
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer)
 		this.gl.vertexAttribPointer(this.positionAttribute, 3, this.gl.FLOAT, false, 0, 0)
 		this.gl.enableVertexAttribArray(this.positionAttribute)
 		this.gl.uniformMatrix4fv(this.modelMatrix, false, model.elements)
+
 		if (!shadePerFace) {
 			this.gl.uniform4f(this.fragmentColor, color[0], color[1], color[2], color[3])
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, count)
