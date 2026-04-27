@@ -1,189 +1,343 @@
-// oxlint-disable typescript/triple-slash-reference
-/// <reference path="../lib/cuon-matrix-cse160.ts" />
-/// <reference path="../lib/webgl-helpers.ts" />
-/// <reference path="../geometry/Geometry.ts" />
-/// <reference path="../geometry/Triangle.ts" />
-/// <reference path="../geometry/Cube.ts" />
+import Stats from 'stats.js'
 
-// RotatedTranslatedTriangle.js (c) 2012 matsuda
-// Vertex shader program
-var VSHADER_SOURCE = `
-	attribute vec4 a_Position;
+import { BlockRenderer, FSHADER_SOURCE, VSHADER_SOURCE } from './blockRenderer.js'
 
-	attribute vec4 a_Color;
-	varying vec4 v_Color;
+type Pose = {
+	frontShoulder: number
+	frontElbow: number
+	frontPaw: number
+	rearHip: number
+	rearKnee: number
+	rearPaw: number
+	headTilt: number
+}
+type BoxSpec = [Vec4, Vec3, Vec3, number?]
+type WalkMotion = { bob: number; roll: number; headBob: number; headTilt: number }
+type ElementCtor<T extends HTMLElement> = { new (): T }
 
-	uniform mat4 u_GlobalRotation;
-	uniform mat4 u_ModelMatrix;
+const POSE_SLIDERS: [keyof Pose, string][] = [
+	['frontShoulder', 'frontShoulderSlider'],
+	['frontElbow', 'frontElbowSlider'],
+	['frontPaw', 'frontPawSlider'],
+	['rearHip', 'rearShoulderSlider'],
+	['rearKnee', 'rearElbowSlider'],
+	['rearPaw', 'rearPawSlider'],
+	['headTilt', 'headSlider'],
+]
+const WHITE_FUR: Vec4 = [0.95, 0.93, 0.86, 1],
+	CREAM_FUR: Vec4 = [1, 0.97, 0.86, 1],
+	BLACK_FUR: Vec4 = [0.015, 0.014, 0.018, 1]
+const NOSE: Vec4 = [0, 0, 0, 1],
+	PUPIL = NOSE,
+	CLAW_COLOR: Vec4 = [0.86, 0.82, 0.68, 1],
+	EYE_SHINE: Vec4 = [1, 1, 0.95, 1]
+const PANDA_BASE_Y = -0.22,
+	TAU = Math.PI * 2,
+	WALK_RATE = 0.36
+const STEP_PHASE = { rearLeft: 0, frontLeft: 0.23, rearRight: 0.5, frontRight: 0.73 }
+const NO_MOTION: WalkMotion = { bob: 0, roll: 0, headBob: 0, headTilt: 0 }
+const BODY_BOXES: BoxSpec[] = [
+	[WHITE_FUR, [0.02, 0, 0], [0.98, 0.34, 0.5]],
+	[WHITE_FUR, [-0.02, 0.095, 0], [0.78, 0.18, 0.54]],
+	[WHITE_FUR, [0.08, -0.13, 0], [0.62, 0.12, 0.4]],
+	[BLACK_FUR, [-0.38, 0.02, 0], [0.32, 0.36, 0.55]],
+	[BLACK_FUR, [-0.53, -0.02, 0], [0.11, 0.24, 0.38]],
+	[WHITE_FUR, [-0.58, -0.02, 0], [0.095, 0.18, 0.34]],
+	[BLACK_FUR, [0.35, -0.11, 0], [0.28, 0.2, 0.45]],
+	[BLACK_FUR, [0.34, -0.02, -0.255], [0.25, 0.26, 0.07]],
+	[BLACK_FUR, [0.34, -0.02, 0.255], [0.25, 0.26, 0.07]],
+	[WHITE_FUR, [0.56, 0.055, 0], [0.09, 0.075, 0.15]],
+]
+const HEAD_BOXES: BoxSpec[] = [
+	[WHITE_FUR, [0, 0, 0], [0.42, 0.36, 0.54]],
+	[WHITE_FUR, [-0.025, 0.04, 0], [0.36, 0.32, 0.58]],
+	[WHITE_FUR, [-0.035, -0.09, 0], [0.34, 0.18, 0.5]],
+	[WHITE_FUR, [-0.02, -0.01, -0.29], [0.25, 0.25, 0.065]],
+	[WHITE_FUR, [-0.02, -0.01, 0.29], [0.25, 0.25, 0.065]],
+	[CREAM_FUR, [-0.222, -0.025, 0], [0.06, 0.25, 0.43]],
+	[WHITE_FUR, [-0.255, -0.07, -0.16], [0.07, 0.13, 0.16]],
+	[WHITE_FUR, [-0.255, -0.07, 0.16], [0.07, 0.13, 0.16]],
+	[CREAM_FUR, [-0.285, -0.082, 0], [0.055, 0.11, 0.24]],
+	[NOSE, [-0.32, -0.045, 0], [0.028, 0.05, 0.095]],
+	[NOSE, [-0.328, -0.09, 0], [0.012, 0.042, 0.018]],
+	[NOSE, [-0.328, -0.125, 0], [0.01, 0.014, 0.14]],
+]
 
-	void main() {
-	  gl_Position = u_GlobalRotation * u_ModelMatrix * a_Position;
-	  // gl_Position = u_ModelMatrix * a_Position;
-	  v_Color = a_Color;
+const zeroPose = (): Pose => ({
+	frontShoulder: 0,
+	frontElbow: 0,
+	frontPaw: 0,
+	rearHip: 0,
+	rearKnee: 0,
+	rearPaw: 0,
+	headTilt: 0,
+})
+const idleHeadTilt = (seconds: number) => 1.2 * Math.sin(TAU * (seconds * WALK_RATE * 2 + 0.18))
+
+class App {
+	readonly renderer: BlockRenderer
+	readonly stats = new Stats()
+	baseRotationY = -41
+	dragRotationX = -0.5
+	dragRotationY = 0
+	elapsedSeconds = 0
+	private readonly startTime = performance.now() / 1000
+	walking = false
+	private poking = false
+	private pokeStartSeconds = 0
+	private isDragging = false
+	private lastPointerX = 0
+	private lastPointerY = 0
+	private sliderPose = zeroPose()
+	currentPose = zeroPose()
+
+	constructor(
+		private readonly canvas: HTMLCanvasElement,
+		readonly gl: WebGL2RenderingContextWithProgram,
+	) {
+		this.renderer = new BlockRenderer(gl)
+		Object.assign(this.stats.dom.style, { left: 'auto', right: '0', zIndex: '10000' })
+		this.stats.showPanel(0)
+		document.body.appendChild(this.stats.dom)
+		for (const [key, id] of POSE_SLIDERS)
+			this.range(id, (value) => {
+				this.sliderPose[key] = value
+			})
+		this.range('rotationSlider', (value) => {
+			this.baseRotationY = value
+		})
+		this.el('animationOnButton', HTMLButtonElement).addEventListener('click', () => {
+			this.walking = true
+		})
+		this.el('animationOffButton', HTMLButtonElement).addEventListener('click', () => {
+			this.walking = false
+		})
+		canvas.addEventListener('mousedown', (event) => this.mouseDown(event))
+		canvas.addEventListener('mousemove', (event) => this.mouseMove(event))
+		canvas.addEventListener('mouseup', () => {
+			this.isDragging = false
+		})
+		canvas.addEventListener('mouseleave', () => {
+			this.isDragging = false
+		})
 	}
-`
-// Fragment shader program
-var FSHADER_SOURCE = `
-	precision mediump float;
 
-	varying vec4 v_Color;
-
-	void main() {
-	  gl_FragColor = v_Color;
-	}
-`
-
-let shapes: Geometry[] = []
-let gAnimalGlobalRotation = 0
-
-function initVertexBuffers(gl: WebGL2RenderingContextWithProgram, shape: Geometry) {
-	var n = shape.vertices.length / shape.floatsPerVertex // The number of vertices
-
-	// Create a buffer object
-	var vertexBuffer = gl.createBuffer()
-	if (!vertexBuffer) {
-		console.log('Failed to create the buffer object')
-		return -1
+	start() {
+		requestAnimationFrame(this.tick)
 	}
 
-	// Bind the buffer object to target
-	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-	// Write date into the buffer object
-	gl.bufferData(gl.ARRAY_BUFFER, shape.vertices, gl.STATIC_DRAW)
-
-	const FLOAT_SIZE = Float32Array.BYTES_PER_ELEMENT
-	const stride = shape.floatsPerVertex * FLOAT_SIZE
-
-	let a_Position = gl.getAttribLocation(gl.program, 'a_Position')
-	if (a_Position < 0) {
-		console.log('Failed to get the storage location of a_Position')
-		return -1
+	private tick = (now: number) => {
+		this.elapsedSeconds = now / 1000 - this.startTime
+		this.currentPose = this.walking
+			? { ...zeroPose(), headTilt: idleHeadTilt(this.elapsedSeconds) }
+			: { ...this.sliderPose }
+		if (this.poking) this.applyPokePose()
+		renderScene(this)
+		requestAnimationFrame(this.tick)
 	}
-	gl.vertexAttribPointer(a_Position, shape.positionSize, gl.FLOAT, false, stride, 0)
-	gl.enableVertexAttribArray(a_Position)
 
-	let a_Color = gl.getAttribLocation(gl.program, 'a_Color')
-	if (a_Color < 0) {
-		console.log('Failed to get the storage location of a_Color')
-		return -1
+	private applyPokePose() {
+		const t = this.elapsedSeconds - this.pokeStartSeconds
+		if (t > 1.2) this.poking = false
+		else {
+			const wiggle = Math.sin(t * Math.PI * 5) * (1 - t / 1.2)
+			this.currentPose.headTilt += 18 * wiggle
+			this.currentPose.frontPaw += 45 * Math.abs(wiggle)
+		}
 	}
-	gl.vertexAttribPointer(
-		a_Color,
-		shape.colorSize,
-		gl.FLOAT,
-		false,
-		stride,
-		shape.positionSize * FLOAT_SIZE,
+
+	private mouseDown(event: MouseEvent) {
+		if (event.shiftKey) {
+			this.poking = true
+			this.pokeStartSeconds = this.elapsedSeconds
+		} else {
+			this.isDragging = true
+			this.lastPointerX = event.clientX
+			this.lastPointerY = event.clientY
+		}
+	}
+
+	private mouseMove(event: MouseEvent) {
+		if (!this.isDragging) return
+		this.dragRotationY += (event.clientX - this.lastPointerX) * 0.5
+		this.dragRotationX += (event.clientY - this.lastPointerY) * 0.5
+		this.lastPointerX = event.clientX
+		this.lastPointerY = event.clientY
+	}
+
+	private range(id: string, f: (value: number) => void) {
+		const input = this.el(id, HTMLInputElement)
+		input.addEventListener('input', () => f(Number(input.value)))
+	}
+
+	private el<T extends HTMLElement>(id: string, ctor: ElementCtor<T>): T {
+		const el = document.getElementById(id)
+		if (!(el instanceof ctor)) throw new Error(`Failed to get ${id}`)
+		return el
+	}
+}
+
+function renderScene(app: App) {
+	app.stats.begin()
+	app.gl.clear(app.gl.COLOR_BUFFER_BIT | app.gl.DEPTH_BUFFER_BIT)
+	app.renderer.setGlobalRotation(
+		new Matrix4()
+			.setRotate(app.baseRotationY + app.dragRotationY, 0, 1, 0)
+			.rotate(app.dragRotationX, 1, 0, 0),
 	)
-	gl.enableVertexAttribArray(a_Color)
-
-	return n
+	drawPanda(app.renderer, app.elapsedSeconds, app.currentPose, app.walking)
+	app.stats.end()
 }
 
-function renderScene(gl: WebGL2RenderingContextWithProgram) {
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+function drawPanda(r: BlockRenderer, seconds: number, pose: Pose, walking: boolean) {
+	const cycle = seconds * WALK_RATE,
+		gait = walking ? walkMotion(cycle) : NO_MOTION
+	const root = new Matrix4().translate(0.03, PANDA_BASE_Y + gait.bob, 0).scale(0.82, 0.82, 0.82)
+	root.rotate(gait.roll, 1, 0, 0)
+	drawBoxes(r, root, BODY_BOXES)
+	drawHead(r, root, gait, pose)
+	drawLegs(r, root, cycle, pose, walking)
+}
 
-	for (let s of shapes) {
-		draw(gl, s)
+function drawHead(r: BlockRenderer, root: Matrix4, gait: WalkMotion, pose: Pose) {
+	const head = new Matrix4(root).translate(-0.75, 0.025 + gait.headBob, -0.055)
+	head.rotate(-2 + pose.headTilt + gait.headTilt, 0, 0, 1).rotate(-gait.roll * 0.45, 1, 0, 0)
+	drawBoxes(r, head, HEAD_BOXES)
+	for (const side of [-1, 1]) {
+		drawEar(r, head, side)
+		drawEye(r, head, side)
 	}
 }
 
-function tick(gl: WebGL2RenderingContextWithProgram) {
-	// gAnimalGlobalRotation += 1
-	renderScene(gl)
-	requestAnimationFrame(() => tick(gl))
+function drawLegs(r: BlockRenderer, root: Matrix4, cycle: number, pose: Pose, walking: boolean) {
+	const legData: [number, number, Vec3, boolean][] = [
+		[
+			-0.39,
+			-0.26,
+			walking
+				? limbPose(cycle, STEP_PHASE.frontLeft, -1, true)
+				: [210 - pose.frontShoulder, 42 + pose.frontElbow, -30 + pose.frontPaw],
+			true,
+		],
+		[
+			0.31,
+			0.25,
+			walking
+				? limbPose(cycle, STEP_PHASE.rearRight, 1, false)
+				: [235 - pose.rearHip, 48 - pose.rearKnee, -35 - pose.rearPaw],
+			false,
+		],
+		[
+			-0.36,
+			0.25,
+			walking
+				? limbPose(cycle, STEP_PHASE.frontRight, 1, true)
+				: [285 + pose.frontShoulder, -48 - pose.frontElbow, 25 - pose.frontPaw],
+			true,
+		],
+		[
+			0.34,
+			-0.26,
+			walking
+				? limbPose(cycle, STEP_PHASE.rearLeft, -1, false)
+				: [330 + pose.rearHip, -40 + pose.rearKnee, -28 + pose.rearPaw],
+			false,
+		],
+	]
+	for (const [x, z, angles, frontLeg] of legData) drawLeg(r, root, x, z, angles, frontLeg)
 }
 
-function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry) {
-	shape.modelMatrix.setIdentity()
-
-	// Write the positions of vertices to a vertex shader
-	let n = initVertexBuffers(gl, shape)
-	if (n < 0) {
-		console.log('Failed to set the positions of the vertices')
-		return
-	}
-
-	shape.modelMatrix
-		.multiply(shape.translationMatrix)
-		.multiply(shape.rotationMatrix)
-		.multiply(shape.scaleMatrix)
-
-	// Pass the model matrix to the vertex shader
-	let u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
-	if (!u_ModelMatrix) {
-		console.log('Failed to get the storage location of u_ModelMatrix')
-		return
-	}
-	gl.uniformMatrix4fv(u_ModelMatrix, false, shape.modelMatrix.elements)
-
-	let u_GlobalRotation = gl.getUniformLocation(gl.program, 'u_GlobalRotation')
-	if (!u_GlobalRotation) {
-		console.log('Failed to get the storage location of u_ModelMatrix')
-		return
-	}
-	let globalRotMat = new Matrix4()
-	globalRotMat.setRotate(gAnimalGlobalRotation, 0, 1, 0)
-	gl.uniformMatrix4fv(u_GlobalRotation, false, globalRotMat.elements)
-
-	// Pass the model matrix to the vertex shader
-	// let u_GlobalRotation = gl.getUniformLocation(gl.program, 'u_GlobalRotation')
-	// if (!gAnimalGlobalRotation) {
-	// 	console.log('Failed to get the storage location of u_GlobalRotation')
-	// 	return
-	// }
-	// gl.uniformMatrix4fv(u_GlobalRotation, false, shape.modelMatrix.elements)
-
-	gl.drawArrays(gl.TRIANGLES, 0, n)
-	// gl.drawArrays(gl.LINE_LOOP, 0, n) // wireframe}
+function drawEar(r: BlockRenderer, head: Matrix4, side: number) {
+	r.sphere(head, BLACK_FUR, [0.005, 0.255, 0.225 * side], [0.2, 0.2, 0.2], 8 * side)
 }
 
-// oxlint-disable-next-line no-unused-vars
+function drawEye(r: BlockRenderer, head: Matrix4, side: number) {
+	const z = 0.118 * side
+	r.boxRot(head, BLACK_FUR, [-0.252, 0.075, z], [0.032, 0.155, 0.12], [-12 * side, 0, 0])
+	r.boxRot(
+		head,
+		BLACK_FUR,
+		[-0.259, 0.005, z + 0.018 * side],
+		[0.024, 0.075, 0.09],
+		[-12 * side, 0, 0],
+	)
+	r.box(head, PUPIL, [-0.278, 0.088, z], [0.014, 0.034, 0.04])
+	r.box(head, EYE_SHINE, [-0.288, 0.1, z - 0.014 * side], [0.008, 0.011, 0.012])
+}
+
+function drawLeg(
+	r: BlockRenderer,
+	root: Matrix4,
+	x: number,
+	z: number,
+	angles: Vec3,
+	frontLeg: boolean,
+) {
+	const [upper, lower, paw, upperHeight, lowerHeight, depth] = frontLeg
+		? [0.12, 0.21, 0.16, 0.13, 0.105, 0.155]
+		: [0.14, 0.17, 0.2, 0.16, 0.12, 0.18]
+	const joint = new Matrix4(root).translate(x, frontLeg ? -0.12 : -0.11, z)
+	r.box(joint, BLACK_FUR, [0, 0, 0], [frontLeg ? 0.13 : 0.16, upperHeight, depth])
+	const shoulder = new Matrix4(joint).rotate(angles[0], 0, 0, 1)
+	r.box(shoulder, BLACK_FUR, [upper / 2, 0, 0], [upper, upperHeight, depth])
+	const elbow = new Matrix4(shoulder).translate(upper, 0, 0).rotate(angles[1], 0, 0, 1)
+	r.box(elbow, BLACK_FUR, [lower / 2, 0, 0], [lower, lowerHeight, depth - 0.01])
+	const foot = new Matrix4(elbow).translate(lower, 0, 0).rotate(angles[2], 0, 0, 1)
+	r.box(foot, BLACK_FUR, [paw / 2, 0.02, 0], [paw, frontLeg ? 0.075 : 0.085, frontLeg ? 0.19 : 0.2])
+	for (const dz of [frontLeg ? -0.055 : -0.065, 0, frontLeg ? 0.055 : 0.065])
+		r.box(foot, CLAW_COLOR, [paw + 0.018, 0.036, dz], [0.035, 0.018, frontLeg ? 0.021 : 0.024])
+	if (frontLeg)
+		r.box(foot, CLAW_COLOR, [paw * 0.72, 0.052, Math.sign(z) * 0.095], [0.03, 0.018, 0.028])
+}
+
+function walkMotion(cycle: number): WalkMotion {
+	const phases = [
+		phase(cycle, STEP_PHASE.rearLeft),
+		phase(cycle, STEP_PHASE.frontLeft),
+		phase(cycle, STEP_PHASE.rearRight),
+		phase(cycle, STEP_PHASE.frontRight),
+	]
+	const lifts = phases.map(lift),
+		swing = lifts[2] + lifts[3] - lifts[0] - lifts[1],
+		foreLift = lifts[1] + lifts[3]
+	return {
+		bob: -0.0025 * foreLift + 0.0012 * Math.sin(TAU * (cycle * 4 + 0.08)),
+		roll: 0.9 * support(phases) - 0.9 * swing,
+		headBob: -0.002 * foreLift + 0.002 * Math.sin(TAU * (cycle * 2 + 0.36)),
+		headTilt: 0.7 * Math.sin(TAU * (cycle * 2 + 0.58)) - 0.25 * swing,
+	}
+}
+
+function limbPose(cycle: number, start: number, side: number, frontLeg: boolean): Vec3 {
+	const p = phase(cycle, start),
+		l = lift(p),
+		shoulder =
+			(frontLeg ? 267 : 286) + (frontLeg ? 31 : 34) * Math.cos(p) + (frontLeg ? 1.2 : -1.2) * side,
+		elbow = (frontLeg ? 13 : -7) + (frontLeg ? -10 : -17) * Math.cos(p) + (frontLeg ? 18 : -16) * l
+	return [shoulder, elbow, (frontLeg ? 188 : 190) - shoulder - elbow + (frontLeg ? 7 : -5) * l]
+}
+
+function drawBoxes(r: BlockRenderer, base: Matrix4, boxes: BoxSpec[]) {
+	for (const [color, translate, scale, rotateZ = 0] of boxes)
+		r.box(base, color, translate, scale, rotateZ)
+}
+function phase(cycle: number, start: number) {
+	return TAU * (cycle - start)
+}
+function lift(p: number) {
+	return Math.max(0, Math.sin(p)) ** 2
+}
+function support(phases: number[]) {
+	const load = phases.map((p) => 1 - 0.55 * lift(p))
+	return (-load[0] - load[1] + load[2] + load[3]) / load.reduce((a, b) => a + b, 0)
+}
+
 function main() {
-	let { gl } = setupWebGL()
-
+	const { canvas, gl } = setupWebGL()
 	gl.enable(gl.DEPTH_TEST)
-	gl.clearColor(0, 0, 0, 1)
-
-	if (!initShaders2(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-		console.log('Failed to intialize shaders.')
-		return -1
-	}
-
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	// Event Listeners
-	const rotationSlider = getInput('rotationSlider')
-	rotationSlider.addEventListener('input', function () {
-		gAnimalGlobalRotation = Number(this.value) * 10
-	})
-
-	let head = new Cube()
-	head.translate(-0.45, -0.12, 0)
-	head.rotateY(135)
-	head.scale(0.42, 0.36, 0.38)
-	shapes.push(head)
-
-	let body = new Cube()
-	body.translate(0, -0.25, 0)
-	body.rotateY(135)
-	body.scale(0.85, 0.35, 0.45)
-
-	shapes.push(body)
-
-	// let tri1 = new Triangle()
-	// tri1.translate(0, -0.2, 0)
-	// tri1.rotateY(45)
-
-	// shapes.push(tri1)
-
-	tick(gl)
-}
-
-function getInput(id: string): HTMLInputElement {
-	const input = document.getElementById(id)
-	if (!(input instanceof HTMLInputElement)) throw new Error(`Failed to get input with id ${id}`)
-	return input
+	gl.clearColor(0.78, 0.84, 0.9, 1)
+	if (initShaders2(gl, VSHADER_SOURCE, FSHADER_SOURCE)) new App(canvas, gl).start()
+	else console.error('Failed to initialize shaders.')
 }
 
 window.addEventListener('load', main)

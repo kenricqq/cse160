@@ -1,33 +1,36 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
-		<meta charset="utf-8">
-		<title>Change a point color</title>
+		<meta charset="utf-8" />
+		<title>Blocky Panda</title>
 		<script src="../lib/webgl-utils.js"></script>
 		<script src="../lib/webgl-debug.js"></script>
 		<script src="../lib/cuon-utils.js"></script>
 		<script src="../lib/cuon-matrix-cse160.js"></script>
 		<script src="../lib/webgl-helpers.js"></script>
 		<script src="../geometry/Geometry.js"></script>
-		<script src="../geometry/Triangle.js"></script>
 		<script src="../geometry/Cube.js"></script>
-		<script src="BlockyAnimal.js"></script>
+		<script src="../geometry/Sphere.js"></script>
+		<script type="importmap">
+			{ "imports": { "stats.js": "https://esm.sh/stats.js@0.17.0" } }
+		</script>
+		<script type="module" src="BlockyAnimal.js"></script>
 		<style>
 			body {
 				margin: 1rem;
 				font-family: 'Trebuchet MS', 'Gill Sans', sans-serif;
 			}
-			
+
 			canvas,
 			#refImg {
 				display: block;
 				margin-bottom: 1rem;
 			}
-			
+
 			.control-panel {
 				max-width: 900px;
 			}
-			
+
 			.control-group {
 				padding: 0.8rem 1rem;
 				margin: 0 0 0.75rem;
@@ -35,28 +38,28 @@
 				border: 1px solid #000000;
 				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 			}
-			
+
 			h4 {
 				margin: 0 0 0.5rem;
 			}
-			
+
 			button {
 				margin: 0.1rem 0.35rem 0.1rem 0;
 			}
-			
+
 			label {
 				margin-right: 0.3rem;
 			}
-			
+
 			input[type='range'] {
 				margin: 0 0.75rem 0 0;
 				vertical-align: middle;
 			}
-			
+
 			[hidden] {
 				display: none !important;
 			}
-			
+
 			@media (prefers-reduced-motion: reduce) {
 				button {
 					transition: none;
@@ -64,17 +67,46 @@
 			}
 		</style>
 	</head>
-
 	<body>
-		<canvas id="webgl" width="400" height="400">
-			Please use a browser that supports "canvas"
-		</canvas>
+		<canvas id="webgl" width="500" height="500">Please use a browser that supports canvas.</canvas>
 
 		<div class="control-panel">
 			<div class="control-group">
-				<h4>Shape Color:</h4>
-				<label for="rotationSlider">Rotation</label>
-				<input type="range" id="rotationSlider" name="rotationSlider" min="0" max="36">
+				<h4>View:</h4>
+				<label for="rotationSlider">Global rotation</label>
+				<input id="rotationSlider" type="range" min="-180" max="180" value="-41" />
+			</div>
+
+			<div class="control-group">
+				<h4>Front legs:</h4>
+				<label for="frontShoulderSlider">Shoulder pair</label
+				><input id="frontShoulderSlider" type="range" min="-45" max="45" value="0" />
+				<label for="frontElbowSlider">Elbow pair</label
+				><input id="frontElbowSlider" type="range" min="-60" max="60" value="0" />
+				<label for="frontPawSlider">Paw pair</label
+				><input id="frontPawSlider" type="range" min="-45" max="45" value="0" />
+			</div>
+
+			<div class="control-group">
+				<h4>Rear legs:</h4>
+				<label for="rearShoulderSlider">Hip pair</label
+				><input id="rearShoulderSlider" type="range" min="-45" max="45" value="0" />
+				<label for="rearElbowSlider">Knee pair</label
+				><input id="rearElbowSlider" type="range" min="-60" max="60" value="0" />
+				<label for="rearPawSlider">Rear paw pair</label
+				><input id="rearPawSlider" type="range" min="-45" max="45" value="0" />
+			</div>
+
+			<div class="control-group">
+				<h4>Head:</h4>
+				<label for="headSlider">Head tilt</label
+				><input id="headSlider" type="range" min="-30" max="30" value="0" />
+			</div>
+
+			<div class="control-group">
+				<h4>Animation:</h4>
+				<button id="animationOnButton" type="button">Animation on</button>
+				<button id="animationOffButton" type="button">Animation off</button>
 			</div>
 		</div>
 	</body>

@@ -1,4 +1,4 @@
-"use strict";
+'use strict'
 // oxlint-disable no-unused-vars
 // cuon-matrix.js (c) 2012 kanda and matsuda
 /**
@@ -8,206 +8,215 @@
  * The matrix is replaced by the calculated result.
  */
 class Vector3 {
-    constructor(opt_src) {
-        var v = new Float32Array(3);
-        if (opt_src && typeof opt_src === 'object') {
-            v[0] = opt_src[0];
-            v[1] = opt_src[1];
-            v[2] = opt_src[2];
-        }
-        this.elements = v;
-    }
-    /**
-     * Copy vector.
-     * @param src source vector
-     * @return this
-     */
-    set(src) {
-        var i, s, d;
-        s = src.elements;
-        d = this.elements;
-        if (s === d) {
-            return this;
-        }
-        for (i = 0; i < 3; ++i) {
-            d[i] = s[i];
-        }
-        return this;
-    }
-    /**
-     * Add other to this vector.
-     * @return this
-     */
-    add(other) {
-        var i, o, d;
-        o = other.elements;
-        d = this.elements;
-        for (i = 0; i < 3; ++i) {
-            d[i] += o[i];
-        }
-        return this;
-    }
-    /**
-     * Subtract other from this vector.
-     * @return this
-     */
-    sub(other) {
-        var i, o, d;
-        o = other.elements;
-        d = this.elements;
-        for (i = 0; i < 3; ++i) {
-            d[i] -= o[i];
-        }
-        return this;
-    }
-    /**
-     * Divide this vector by a scalar.
-     * @return this
-     */
-    div(scalar) {
-        var i, d;
-        d = this.elements;
-        for (i = 0; i < 3; ++i) {
-            d[i] /= scalar;
-        }
-        return this;
-    }
-    /**
-     * Multiply this vector by a scalar.
-     * @return this
-     */
-    mul(scalar) {
-        var i, d;
-        d = this.elements;
-        for (i = 0; i < 3; ++i) {
-            d[i] *= scalar;
-        }
-        return this;
-    }
-    /**
-     * Calcualte the dop product between this vector and other.
-     * @return scalar
-     */
-    static dot(other1, other2) {
-        var i, o1, o2;
-        var sum = 0;
-        o1 = other1.elements;
-        o2 = other2.elements;
-        for (i = 0; i < 3; ++i) {
-            sum += o2[i] * o1[i];
-        }
-        return sum;
-    }
-    /**
-     * Calcualte the cross product between this vector and other.
-     * @return new vector
-     */
-    static cross(other1, other2) {
-        const a = other1.elements;
-        const b = other2.elements;
-        let v3 = new Vector3([
-            a[1] * b[2] - a[2] * b[1],
-            a[2] * b[0] - a[0] * b[2],
-            a[0] * b[1] - a[1] * b[0],
-        ]);
-        return v3;
-    }
-    /**
-     * Calculate the magnitude (or length) of this vector.
-     * @return scalar
-     */
-    magnitude() {
-        const el = this.elements;
-        return Math.sqrt(el[0] ** 2 + el[1] ** 2 + el[2] ** 2);
-    }
-    /**
-     * Normalize this vector.
-     * @return this
-     */
-    normalize() {
-        // This function should change this vector (this.elements) and not create a new vector.
-        var i, d;
-        const len = this.magnitude();
-        if (len === 0) {
-            return this;
-        }
-        d = this.elements;
-        if (len === 1) {
-            return this;
-        }
-        for (i = 0; i < 3; ++i) {
-            d[i] /= len;
-        }
-        return this;
-    }
+	constructor(opt_src) {
+		var v = new Float32Array(3)
+		if (opt_src && typeof opt_src === 'object') {
+			v[0] = opt_src[0]
+			v[1] = opt_src[1]
+			v[2] = opt_src[2]
+		}
+		this.elements = v
+	}
+	/**
+	 * Copy vector.
+	 * @param src source vector
+	 * @return this
+	 */
+	set(src) {
+		var i, s, d
+		s = src.elements
+		d = this.elements
+		if (s === d) {
+			return this
+		}
+		for (i = 0; i < 3; ++i) {
+			d[i] = s[i]
+		}
+		return this
+	}
+	/**
+	 * Add other to this vector.
+	 * @return this
+	 */
+	add(other) {
+		var i, o, d
+		o = other.elements
+		d = this.elements
+		for (i = 0; i < 3; ++i) {
+			d[i] += o[i]
+		}
+		return this
+	}
+	/**
+	 * Subtract other from this vector.
+	 * @return this
+	 */
+	sub(other) {
+		var i, o, d
+		o = other.elements
+		d = this.elements
+		for (i = 0; i < 3; ++i) {
+			d[i] -= o[i]
+		}
+		return this
+	}
+	/**
+	 * Divide this vector by a scalar.
+	 * @return this
+	 */
+	div(scalar) {
+		var i, d
+		d = this.elements
+		for (i = 0; i < 3; ++i) {
+			d[i] /= scalar
+		}
+		return this
+	}
+	/**
+	 * Multiply this vector by a scalar.
+	 * @return this
+	 */
+	mul(scalar) {
+		var i, d
+		d = this.elements
+		for (i = 0; i < 3; ++i) {
+			d[i] *= scalar
+		}
+		return this
+	}
+	/**
+	 * Calcualte the dop product between this vector and other.
+	 * @return scalar
+	 */
+	static dot(other1, other2) {
+		var i, o1, o2
+		var sum = 0
+		o1 = other1.elements
+		o2 = other2.elements
+		for (i = 0; i < 3; ++i) {
+			sum += o2[i] * o1[i]
+		}
+		return sum
+	}
+	/**
+	 * Calcualte the cross product between this vector and other.
+	 * @return new vector
+	 */
+	static cross(other1, other2) {
+		const a = other1.elements
+		const b = other2.elements
+		let v3 = new Vector3([
+			a[1] * b[2] - a[2] * b[1],
+			a[2] * b[0] - a[0] * b[2],
+			a[0] * b[1] - a[1] * b[0],
+		])
+		return v3
+	}
+	/**
+	 * Calculate the magnitude (or length) of this vector.
+	 * @return scalar
+	 */
+	magnitude() {
+		const el = this.elements
+		return Math.sqrt(el[0] ** 2 + el[1] ** 2 + el[2] ** 2)
+	}
+	/**
+	 * Normalize this vector.
+	 * @return this
+	 */
+	normalize() {
+		// This function should change this vector (this.elements) and not create a new vector.
+		var i, d
+		const len = this.magnitude()
+		if (len === 0) {
+			return this
+		}
+		d = this.elements
+		if (len === 1) {
+			return this
+		}
+		for (i = 0; i < 3; ++i) {
+			d[i] /= len
+		}
+		return this
+	}
 }
 class Vector4 {
-    /**
-     * Constructor of Vector4
-     * If opt_src is specified, new vector is initialized by opt_src.
-     * @param opt_src source vector(option)
-     */
-    constructor(opt_src) {
-        var v = new Float32Array(4);
-        if (opt_src && typeof opt_src === 'object') {
-            v[0] = opt_src[0];
-            v[1] = opt_src[1];
-            v[2] = opt_src[2];
-            v[3] = opt_src[3];
-        }
-        this.elements = v;
-    }
+	/**
+	 * Constructor of Vector4
+	 * If opt_src is specified, new vector is initialized by opt_src.
+	 * @param opt_src source vector(option)
+	 */
+	constructor(opt_src) {
+		var v = new Float32Array(4)
+		if (opt_src && typeof opt_src === 'object') {
+			v[0] = opt_src[0]
+			v[1] = opt_src[1]
+			v[2] = opt_src[2]
+			v[3] = opt_src[3]
+		}
+		this.elements = v
+	}
 }
 class Matrix4 {
-    /**
-     * Constructor of Matrix4
-     * If opt_src is specified, new matrix is initialized by opt_src.
-     * Otherwise, new matrix is initialized by identity matrix.
-     * @param opt_src source matrix(option)
-     */
-    constructor(opt_src) {
-        /**
-         * Multiply the matrix for rotation from the right.
-         * The vector of rotation axis may not be normalized.
-         * @param angle The angle of rotation (degrees)
-         * @param x The X coordinate of vector of rotation axis.
-         * @param y The Y coordinate of vector of rotation axis.
-         * @param z The Z coordinate of vector of rotation axis.
-         * @return this
-         */
-        this.rotate = function (angle, x, y, z) {
-            return this.concat(new Matrix4().setRotate(angle, x, y, z));
-        };
-        /**
-         * Multiply the matrix for project vertex to plane from the right.(Projected by parallel light.)
-         * @param normX, normY, normZ The normal vector of the plane.(Not necessary to be normalized.)
-         * @param planeX, planeY, planeZ The coordinate of arbitrary points on a plane.
-         * @param lightX, lightY, lightZ The vector of the direction of light.(Not necessary to be normalized.)
-         * @return this
-         */
-        this.dropShadowDirectionally = function (normX, normY, normZ, planeX, planeY, planeZ, lightX, lightY, lightZ) {
-            var a = planeX * normX + planeY * normY + planeZ * normZ;
-            return this.dropShadow([normX, normY, normZ, -a], [lightX, lightY, lightZ, 0]);
-        };
-        var i, s, d;
-        if (opt_src && typeof opt_src === 'object' && opt_src.hasOwnProperty('elements')) {
-            s = opt_src.elements;
-            d = new Float32Array(16);
-            for (i = 0; i < 16; ++i) {
-                d[i] = s[i];
-            }
-            this.elements = d;
-        }
-        else {
-            this.elements = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-        }
-    }
-    /**
-     * Set the identity matrix.
-     * @return this
-     */
-    // prettier-ignore
-    setIdentity() {
+	/**
+	 * Constructor of Matrix4
+	 * If opt_src is specified, new matrix is initialized by opt_src.
+	 * Otherwise, new matrix is initialized by identity matrix.
+	 * @param opt_src source matrix(option)
+	 */
+	constructor(opt_src) {
+		/**
+		 * Multiply the matrix for rotation from the right.
+		 * The vector of rotation axis may not be normalized.
+		 * @param angle The angle of rotation (degrees)
+		 * @param x The X coordinate of vector of rotation axis.
+		 * @param y The Y coordinate of vector of rotation axis.
+		 * @param z The Z coordinate of vector of rotation axis.
+		 * @return this
+		 */
+		this.rotate = function (angle, x, y, z) {
+			return this.concat(new Matrix4().setRotate(angle, x, y, z))
+		}
+		/**
+		 * Multiply the matrix for project vertex to plane from the right.(Projected by parallel light.)
+		 * @param normX, normY, normZ The normal vector of the plane.(Not necessary to be normalized.)
+		 * @param planeX, planeY, planeZ The coordinate of arbitrary points on a plane.
+		 * @param lightX, lightY, lightZ The vector of the direction of light.(Not necessary to be normalized.)
+		 * @return this
+		 */
+		this.dropShadowDirectionally = function (
+			normX,
+			normY,
+			normZ,
+			planeX,
+			planeY,
+			planeZ,
+			lightX,
+			lightY,
+			lightZ,
+		) {
+			var a = planeX * normX + planeY * normY + planeZ * normZ
+			return this.dropShadow([normX, normY, normZ, -a], [lightX, lightY, lightZ, 0])
+		}
+		var i, s, d
+		if (opt_src && typeof opt_src === 'object' && opt_src.hasOwnProperty('elements')) {
+			s = opt_src.elements
+			d = new Float32Array(16)
+			for (i = 0; i < 16; ++i) {
+				d[i] = s[i]
+			}
+			this.elements = d
+		} else {
+			this.elements = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+		}
+	}
+	/**
+	 * Set the identity matrix.
+	 * @return this
+	 */
+	// prettier-ignore
+	setIdentity() {
         var e = this.elements;
         e[0] = 1;
         e[4] = 0;
@@ -227,43 +236,43 @@ class Matrix4 {
         e[15] = 1;
         return this;
     }
-    /**
-     * Copy matrix.
-     * @param src source matrix
-     * @return this
-     */
-    set(src) {
-        var i, s, d;
-        s = src.elements;
-        d = this.elements;
-        if (s === d) {
-            return this;
-        }
-        for (i = 0; i < 16; ++i) {
-            d[i] = s[i];
-        }
-        return this;
-    }
-    /**
-     * Multiply the matrix from the right.
-     * @param other The multiply matrix
-     * @return this
-     */
-    multiply(other) {
-        var i, e, a, b, ai0, ai1, ai2, ai3;
-        // Calculate e = a * b
-        e = this.elements;
-        a = this.elements;
-        b = other.elements;
-        // If e equals b, copy b to temporary matrix.
-        if (e === b) {
-            b = new Float32Array(16);
-            for (i = 0; i < 16; ++i) {
-                b[i] = e[i];
-            }
-        }
-        // prettier-ignore
-        for (i = 0; i < 4; i++) {
+	/**
+	 * Copy matrix.
+	 * @param src source matrix
+	 * @return this
+	 */
+	set(src) {
+		var i, s, d
+		s = src.elements
+		d = this.elements
+		if (s === d) {
+			return this
+		}
+		for (i = 0; i < 16; ++i) {
+			d[i] = s[i]
+		}
+		return this
+	}
+	/**
+	 * Multiply the matrix from the right.
+	 * @param other The multiply matrix
+	 * @return this
+	 */
+	multiply(other) {
+		var i, e, a, b, ai0, ai1, ai2, ai3
+		// Calculate e = a * b
+		e = this.elements
+		a = this.elements
+		b = other.elements
+		// If e equals b, copy b to temporary matrix.
+		if (e === b) {
+			b = new Float32Array(16)
+			for (i = 0; i < 16; ++i) {
+				b[i] = e[i]
+			}
+		}
+		// prettier-ignore
+		for (i = 0; i < 4; i++) {
             ai0 = a[i];
             ai1 = a[i + 4];
             ai2 = a[i + 8];
@@ -273,48 +282,48 @@ class Matrix4 {
             e[i + 8] = ai0 * b[8] + ai1 * b[9] + ai2 * b[10] + ai3 * b[11];
             e[i + 12] = ai0 * b[12] + ai1 * b[13] + ai2 * b[14] + ai3 * b[15];
         }
-        return this;
-    }
-    concat(other) {
-        return this.multiply(other);
-    }
-    /**
-     * Multiply the three-dimensional vector.
-     * @param pos  The multiply vector
-     * @return The result of multiplication(Float32Array)
-     */
-    multiplyVector3(pos) {
-        var e = this.elements;
-        var p = pos.elements;
-        var v = new Vector3();
-        var result = v.elements;
-        result[0] = p[0] * e[0] + p[1] * e[4] + p[2] * e[8] + e[12];
-        result[1] = p[0] * e[1] + p[1] * e[5] + p[2] * e[9] + e[13];
-        result[2] = p[0] * e[2] + p[1] * e[6] + p[2] * e[10] + e[14];
-        return v;
-    }
-    /**
-     * Multiply the four-dimensional vector.
-     * @param pos  The multiply vector
-     * @return The result of multiplication(Float32Array)
-     */
-    multiplyVector4(pos) {
-        var e = this.elements;
-        var p = pos.elements;
-        var v = new Vector4();
-        var result = v.elements;
-        result[0] = p[0] * e[0] + p[1] * e[4] + p[2] * e[8] + p[3] * e[12];
-        result[1] = p[0] * e[1] + p[1] * e[5] + p[2] * e[9] + p[3] * e[13];
-        result[2] = p[0] * e[2] + p[1] * e[6] + p[2] * e[10] + p[3] * e[14];
-        result[3] = p[0] * e[3] + p[1] * e[7] + p[2] * e[11] + p[3] * e[15];
-        return v;
-    }
-    /**
-     * Transpose the matrix.
-     * @return this
-     */
-    // prettier-ignore
-    transpose() {
+		return this
+	}
+	concat(other) {
+		return this.multiply(other)
+	}
+	/**
+	 * Multiply the three-dimensional vector.
+	 * @param pos  The multiply vector
+	 * @return The result of multiplication(Float32Array)
+	 */
+	multiplyVector3(pos) {
+		var e = this.elements
+		var p = pos.elements
+		var v = new Vector3()
+		var result = v.elements
+		result[0] = p[0] * e[0] + p[1] * e[4] + p[2] * e[8] + e[12]
+		result[1] = p[0] * e[1] + p[1] * e[5] + p[2] * e[9] + e[13]
+		result[2] = p[0] * e[2] + p[1] * e[6] + p[2] * e[10] + e[14]
+		return v
+	}
+	/**
+	 * Multiply the four-dimensional vector.
+	 * @param pos  The multiply vector
+	 * @return The result of multiplication(Float32Array)
+	 */
+	multiplyVector4(pos) {
+		var e = this.elements
+		var p = pos.elements
+		var v = new Vector4()
+		var result = v.elements
+		result[0] = p[0] * e[0] + p[1] * e[4] + p[2] * e[8] + p[3] * e[12]
+		result[1] = p[0] * e[1] + p[1] * e[5] + p[2] * e[9] + p[3] * e[13]
+		result[2] = p[0] * e[2] + p[1] * e[6] + p[2] * e[10] + p[3] * e[14]
+		result[3] = p[0] * e[3] + p[1] * e[7] + p[2] * e[11] + p[3] * e[15]
+		return v
+	}
+	/**
+	 * Transpose the matrix.
+	 * @return this
+	 */
+	// prettier-ignore
+	transpose() {
         var e, t;
         e = this.elements;
         t = e[1];
@@ -337,13 +346,13 @@ class Matrix4 {
         e[14] = t;
         return this;
     }
-    /**
-     * Calculate the inverse matrix of specified matrix, and set to this.
-     * @param other The source matrix
-     * @return this
-     */
-    // prettier-ignore
-    setInverseOf(other) {
+	/**
+	 * Calculate the inverse matrix of specified matrix, and set to this.
+	 * @param other The source matrix
+	 * @return this
+	 */
+	// prettier-ignore
+	setInverseOf(other) {
         var i, s, d, inv, det;
         s = other.elements;
         d = this.elements;
@@ -390,184 +399,184 @@ class Matrix4 {
         }
         return this;
     }
-    /**
-     * Calculate the inverse matrix of this, and set to this.
-     * @return this
-     */
-    invert() {
-        return this.setInverseOf(this);
-    }
-    /**
-     * Set the orthographic projection matrix.
-     * @param left The coordinate of the left of clipping plane.
-     * @param right The coordinate of the right of clipping plane.
-     * @param bottom The coordinate of the bottom of clipping plane.
-     * @param top The coordinate of the top top clipping plane.
-     * @param near The distances to the nearer depth clipping plane. This value is minus if the plane is to be behind the viewer.
-     * @param far The distances to the farther depth clipping plane. This value is minus if the plane is to be behind the viewer.
-     * @return this
-     */
-    setOrtho(left, right, bottom, top, near, far) {
-        var e, rw, rh, rd;
-        if (left === right || bottom === top || near === far) {
-            throw 'null frustum';
-        }
-        rw = 1 / (right - left);
-        rh = 1 / (top - bottom);
-        rd = 1 / (far - near);
-        e = this.elements;
-        e[0] = 2 * rw;
-        e[1] = 0;
-        e[2] = 0;
-        e[3] = 0;
-        e[4] = 0;
-        e[5] = 2 * rh;
-        e[6] = 0;
-        e[7] = 0;
-        e[8] = 0;
-        e[9] = 0;
-        e[10] = -2 * rd;
-        e[11] = 0;
-        e[12] = -(right + left) * rw;
-        e[13] = -(top + bottom) * rh;
-        e[14] = -(far + near) * rd;
-        e[15] = 1;
-        return this;
-    }
-    /**
-     * Multiply the orthographic projection matrix from the right.
-     * @param left The coordinate of the left of clipping plane.
-     * @param right The coordinate of the right of clipping plane.
-     * @param bottom The coordinate of the bottom of clipping plane.
-     * @param top The coordinate of the top top clipping plane.
-     * @param near The distances to the nearer depth clipping plane. This value is minus if the plane is to be behind the viewer.
-     * @param far The distances to the farther depth clipping plane. This value is minus if the plane is to be behind the viewer.
-     * @return this
-     */
-    ortho(left, right, bottom, top, near, far) {
-        return this.concat(new Matrix4().setOrtho(left, right, bottom, top, near, far));
-    }
-    /**
-     * Set the perspective projection matrix.
-     * @param left The coordinate of the left of clipping plane.
-     * @param right The coordinate of the right of clipping plane.
-     * @param bottom The coordinate of the bottom of clipping plane.
-     * @param top The coordinate of the top top clipping plane.
-     * @param near The distances to the nearer depth clipping plane. This value must be plus value.
-     * @param far The distances to the farther depth clipping plane. This value must be plus value.
-     * @return this
-     */
-    setFrustum(left, right, bottom, top, near, far) {
-        var e, rw, rh, rd;
-        if (left === right || top === bottom || near === far) {
-            throw 'null frustum';
-        }
-        if (near <= 0) {
-            throw 'near <= 0';
-        }
-        if (far <= 0) {
-            throw 'far <= 0';
-        }
-        rw = 1 / (right - left);
-        rh = 1 / (top - bottom);
-        rd = 1 / (far - near);
-        e = this.elements;
-        e[0] = 2 * near * rw;
-        e[1] = 0;
-        e[2] = 0;
-        e[3] = 0;
-        e[4] = 0;
-        e[5] = 2 * near * rh;
-        e[6] = 0;
-        e[7] = 0;
-        e[8] = (right + left) * rw;
-        e[9] = (top + bottom) * rh;
-        e[10] = -(far + near) * rd;
-        e[11] = -1;
-        e[12] = 0;
-        e[13] = 0;
-        e[14] = -2 * near * far * rd;
-        e[15] = 0;
-        return this;
-    }
-    /**
-     * Multiply the perspective projection matrix from the right.
-     * @param left The coordinate of the left of clipping plane.
-     * @param right The coordinate of the right of clipping plane.
-     * @param bottom The coordinate of the bottom of clipping plane.
-     * @param top The coordinate of the top top clipping plane.
-     * @param near The distances to the nearer depth clipping plane. This value must be plus value.
-     * @param far The distances to the farther depth clipping plane. This value must be plus value.
-     * @return this
-     */
-    frustum(left, right, bottom, top, near, far) {
-        return this.concat(new Matrix4().setFrustum(left, right, bottom, top, near, far));
-    }
-    /**
-     * Set the perspective projection matrix by fovy and aspect.
-     * @param fovy The angle between the upper and lower sides of the frustum.
-     * @param aspect The aspect ratio of the frustum. (width/height)
-     * @param near The distances to the nearer depth clipping plane. This value must be plus value.
-     * @param far The distances to the farther depth clipping plane. This value must be plus value.
-     * @return this
-     */
-    setPerspective(fovy, aspect, near, far) {
-        var e, rd, s, ct;
-        if (near === far || aspect === 0) {
-            throw 'null frustum';
-        }
-        if (near <= 0) {
-            throw 'near <= 0';
-        }
-        if (far <= 0) {
-            throw 'far <= 0';
-        }
-        fovy = (Math.PI * fovy) / 180 / 2;
-        s = Math.sin(fovy);
-        if (s === 0) {
-            throw 'null frustum';
-        }
-        rd = 1 / (far - near);
-        ct = Math.cos(fovy) / s;
-        e = this.elements;
-        e[0] = ct / aspect;
-        e[1] = 0;
-        e[2] = 0;
-        e[3] = 0;
-        e[4] = 0;
-        e[5] = ct;
-        e[6] = 0;
-        e[7] = 0;
-        e[8] = 0;
-        e[9] = 0;
-        e[10] = -(far + near) * rd;
-        e[11] = -1;
-        e[12] = 0;
-        e[13] = 0;
-        e[14] = -2 * near * far * rd;
-        e[15] = 0;
-        return this;
-    }
-    /**
-     * Multiply the perspective projection matrix from the right.
-     * @param fovy The angle between the upper and lower sides of the frustum.
-     * @param aspect The aspect ratio of the frustum. (width/height)
-     * @param near The distances to the nearer depth clipping plane. This value must be plus value.
-     * @param far The distances to the farther depth clipping plane. This value must be plus value.
-     * @return this
-     */
-    perspective(fovy, aspect, near, far) {
-        return this.concat(new Matrix4().setPerspective(fovy, aspect, near, far));
-    }
-    /**
-     * Set the matrix for scaling.
-     * @param x The scale factor along the X axis
-     * @param y The scale factor along the Y axis
-     * @param z The scale factor along the Z axis
-     * @return this
-     */
-    // prettier-ignore
-    setScale(x, y, z) {
+	/**
+	 * Calculate the inverse matrix of this, and set to this.
+	 * @return this
+	 */
+	invert() {
+		return this.setInverseOf(this)
+	}
+	/**
+	 * Set the orthographic projection matrix.
+	 * @param left The coordinate of the left of clipping plane.
+	 * @param right The coordinate of the right of clipping plane.
+	 * @param bottom The coordinate of the bottom of clipping plane.
+	 * @param top The coordinate of the top top clipping plane.
+	 * @param near The distances to the nearer depth clipping plane. This value is minus if the plane is to be behind the viewer.
+	 * @param far The distances to the farther depth clipping plane. This value is minus if the plane is to be behind the viewer.
+	 * @return this
+	 */
+	setOrtho(left, right, bottom, top, near, far) {
+		var e, rw, rh, rd
+		if (left === right || bottom === top || near === far) {
+			throw 'null frustum'
+		}
+		rw = 1 / (right - left)
+		rh = 1 / (top - bottom)
+		rd = 1 / (far - near)
+		e = this.elements
+		e[0] = 2 * rw
+		e[1] = 0
+		e[2] = 0
+		e[3] = 0
+		e[4] = 0
+		e[5] = 2 * rh
+		e[6] = 0
+		e[7] = 0
+		e[8] = 0
+		e[9] = 0
+		e[10] = -2 * rd
+		e[11] = 0
+		e[12] = -(right + left) * rw
+		e[13] = -(top + bottom) * rh
+		e[14] = -(far + near) * rd
+		e[15] = 1
+		return this
+	}
+	/**
+	 * Multiply the orthographic projection matrix from the right.
+	 * @param left The coordinate of the left of clipping plane.
+	 * @param right The coordinate of the right of clipping plane.
+	 * @param bottom The coordinate of the bottom of clipping plane.
+	 * @param top The coordinate of the top top clipping plane.
+	 * @param near The distances to the nearer depth clipping plane. This value is minus if the plane is to be behind the viewer.
+	 * @param far The distances to the farther depth clipping plane. This value is minus if the plane is to be behind the viewer.
+	 * @return this
+	 */
+	ortho(left, right, bottom, top, near, far) {
+		return this.concat(new Matrix4().setOrtho(left, right, bottom, top, near, far))
+	}
+	/**
+	 * Set the perspective projection matrix.
+	 * @param left The coordinate of the left of clipping plane.
+	 * @param right The coordinate of the right of clipping plane.
+	 * @param bottom The coordinate of the bottom of clipping plane.
+	 * @param top The coordinate of the top top clipping plane.
+	 * @param near The distances to the nearer depth clipping plane. This value must be plus value.
+	 * @param far The distances to the farther depth clipping plane. This value must be plus value.
+	 * @return this
+	 */
+	setFrustum(left, right, bottom, top, near, far) {
+		var e, rw, rh, rd
+		if (left === right || top === bottom || near === far) {
+			throw 'null frustum'
+		}
+		if (near <= 0) {
+			throw 'near <= 0'
+		}
+		if (far <= 0) {
+			throw 'far <= 0'
+		}
+		rw = 1 / (right - left)
+		rh = 1 / (top - bottom)
+		rd = 1 / (far - near)
+		e = this.elements
+		e[0] = 2 * near * rw
+		e[1] = 0
+		e[2] = 0
+		e[3] = 0
+		e[4] = 0
+		e[5] = 2 * near * rh
+		e[6] = 0
+		e[7] = 0
+		e[8] = (right + left) * rw
+		e[9] = (top + bottom) * rh
+		e[10] = -(far + near) * rd
+		e[11] = -1
+		e[12] = 0
+		e[13] = 0
+		e[14] = -2 * near * far * rd
+		e[15] = 0
+		return this
+	}
+	/**
+	 * Multiply the perspective projection matrix from the right.
+	 * @param left The coordinate of the left of clipping plane.
+	 * @param right The coordinate of the right of clipping plane.
+	 * @param bottom The coordinate of the bottom of clipping plane.
+	 * @param top The coordinate of the top top clipping plane.
+	 * @param near The distances to the nearer depth clipping plane. This value must be plus value.
+	 * @param far The distances to the farther depth clipping plane. This value must be plus value.
+	 * @return this
+	 */
+	frustum(left, right, bottom, top, near, far) {
+		return this.concat(new Matrix4().setFrustum(left, right, bottom, top, near, far))
+	}
+	/**
+	 * Set the perspective projection matrix by fovy and aspect.
+	 * @param fovy The angle between the upper and lower sides of the frustum.
+	 * @param aspect The aspect ratio of the frustum. (width/height)
+	 * @param near The distances to the nearer depth clipping plane. This value must be plus value.
+	 * @param far The distances to the farther depth clipping plane. This value must be plus value.
+	 * @return this
+	 */
+	setPerspective(fovy, aspect, near, far) {
+		var e, rd, s, ct
+		if (near === far || aspect === 0) {
+			throw 'null frustum'
+		}
+		if (near <= 0) {
+			throw 'near <= 0'
+		}
+		if (far <= 0) {
+			throw 'far <= 0'
+		}
+		fovy = (Math.PI * fovy) / 180 / 2
+		s = Math.sin(fovy)
+		if (s === 0) {
+			throw 'null frustum'
+		}
+		rd = 1 / (far - near)
+		ct = Math.cos(fovy) / s
+		e = this.elements
+		e[0] = ct / aspect
+		e[1] = 0
+		e[2] = 0
+		e[3] = 0
+		e[4] = 0
+		e[5] = ct
+		e[6] = 0
+		e[7] = 0
+		e[8] = 0
+		e[9] = 0
+		e[10] = -(far + near) * rd
+		e[11] = -1
+		e[12] = 0
+		e[13] = 0
+		e[14] = -2 * near * far * rd
+		e[15] = 0
+		return this
+	}
+	/**
+	 * Multiply the perspective projection matrix from the right.
+	 * @param fovy The angle between the upper and lower sides of the frustum.
+	 * @param aspect The aspect ratio of the frustum. (width/height)
+	 * @param near The distances to the nearer depth clipping plane. This value must be plus value.
+	 * @param far The distances to the farther depth clipping plane. This value must be plus value.
+	 * @return this
+	 */
+	perspective(fovy, aspect, near, far) {
+		return this.concat(new Matrix4().setPerspective(fovy, aspect, near, far))
+	}
+	/**
+	 * Set the matrix for scaling.
+	 * @param x The scale factor along the X axis
+	 * @param y The scale factor along the Y axis
+	 * @param z The scale factor along the Z axis
+	 * @return this
+	 */
+	// prettier-ignore
+	setScale(x, y, z) {
         var e = this.elements;
         e[0] = x;
         e[4] = 0;
@@ -587,15 +596,15 @@ class Matrix4 {
         e[15] = 1;
         return this;
     }
-    /**
-     * Multiply the matrix for scaling from the right.
-     * @param x The scale factor along the X axis
-     * @param y The scale factor along the Y axis
-     * @param z The scale factor along the Z axis
-     * @return this
-     */
-    // prettier-ignore
-    scale(x, y, z) {
+	/**
+	 * Multiply the matrix for scaling from the right.
+	 * @param x The scale factor along the X axis
+	 * @param y The scale factor along the Y axis
+	 * @param z The scale factor along the Z axis
+	 * @return this
+	 */
+	// prettier-ignore
+	scale(x, y, z) {
         var e = this.elements;
         e[0] *= x;
         e[4] *= y;
@@ -611,15 +620,15 @@ class Matrix4 {
         e[11] *= z;
         return this;
     }
-    /**
-     * Set the matrix for translation.
-     * @param x The X value of a translation.
-     * @param y The Y value of a translation.
-     * @param z The Z value of a translation.
-     * @return this
-     */
-    // prettier-ignore
-    setTranslate(x, y, z) {
+	/**
+	 * Set the matrix for translation.
+	 * @param x The X value of a translation.
+	 * @param y The Y value of a translation.
+	 * @param z The Z value of a translation.
+	 * @return this
+	 */
+	// prettier-ignore
+	setTranslate(x, y, z) {
         var e = this.elements;
         e[0] = 1;
         e[4] = 0;
@@ -639,32 +648,32 @@ class Matrix4 {
         e[15] = 1;
         return this;
     }
-    /**
-     * Multiply the matrix for translation from the right.
-     * @param x The X value of a translation.
-     * @param y The Y value of a translation.
-     * @param z The Z value of a translation.
-     * @return this
-     */
-    translate(x, y, z) {
-        var e = this.elements;
-        e[12] += e[0] * x + e[4] * y + e[8] * z;
-        e[13] += e[1] * x + e[5] * y + e[9] * z;
-        e[14] += e[2] * x + e[6] * y + e[10] * z;
-        e[15] += e[3] * x + e[7] * y + e[11] * z;
-        return this;
-    }
-    /**
-     * Set the matrix for rotation.
-     * The vector of rotation axis may not be normalized.
-     * @param angle The angle of rotation (degrees)
-     * @param x The X coordinate of vector of rotation axis.
-     * @param y The Y coordinate of vector of rotation axis.
-     * @param z The Z coordinate of vector of rotation axis.
-     * @return this
-     */
-    // prettier-ignore
-    setRotate(angle, x, y, z) {
+	/**
+	 * Multiply the matrix for translation from the right.
+	 * @param x The X value of a translation.
+	 * @param y The Y value of a translation.
+	 * @param z The Z value of a translation.
+	 * @return this
+	 */
+	translate(x, y, z) {
+		var e = this.elements
+		e[12] += e[0] * x + e[4] * y + e[8] * z
+		e[13] += e[1] * x + e[5] * y + e[9] * z
+		e[14] += e[2] * x + e[6] * y + e[10] * z
+		e[15] += e[3] * x + e[7] * y + e[11] * z
+		return this
+	}
+	/**
+	 * Set the matrix for rotation.
+	 * The vector of rotation axis may not be normalized.
+	 * @param angle The angle of rotation (degrees)
+	 * @param x The X coordinate of vector of rotation axis.
+	 * @param y The Y coordinate of vector of rotation axis.
+	 * @param z The Z coordinate of vector of rotation axis.
+	 * @return this
+	 */
+	// prettier-ignore
+	setRotate(angle, x, y, z) {
         var e, s, c, len, rlen, nc, xy, yz, zx, xs, ys, zs;
         angle = Math.PI * angle / 180;
         e = this.elements;
@@ -774,75 +783,77 @@ class Matrix4 {
         }
         return this;
     }
-    /**
-     * Set the viewing matrix.
-     * @param eyeX, eyeY, eyeZ The position of the eye point.
-     * @param centerX, centerY, centerZ The position of the reference point.
-     * @param upX, upY, upZ The direction of the up vector.
-     * @return this
-     */
-    setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
-        var e, fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
-        fx = centerX - eyeX;
-        fy = centerY - eyeY;
-        fz = centerZ - eyeZ;
-        // Normalize f.
-        rlf = 1 / Math.sqrt(fx * fx + fy * fy + fz * fz);
-        fx *= rlf;
-        fy *= rlf;
-        fz *= rlf;
-        // Calculate cross product of f and up.
-        sx = fy * upZ - fz * upY;
-        sy = fz * upX - fx * upZ;
-        sz = fx * upY - fy * upX;
-        // Normalize s.
-        rls = 1 / Math.sqrt(sx * sx + sy * sy + sz * sz);
-        sx *= rls;
-        sy *= rls;
-        sz *= rls;
-        // Calculate cross product of s and f.
-        ux = sy * fz - sz * fy;
-        uy = sz * fx - sx * fz;
-        uz = sx * fy - sy * fx;
-        // Set to this.
-        e = this.elements;
-        e[0] = sx;
-        e[1] = ux;
-        e[2] = -fx;
-        e[3] = 0;
-        e[4] = sy;
-        e[5] = uy;
-        e[6] = -fy;
-        e[7] = 0;
-        e[8] = sz;
-        e[9] = uz;
-        e[10] = -fz;
-        e[11] = 0;
-        e[12] = 0;
-        e[13] = 0;
-        e[14] = 0;
-        e[15] = 1;
-        // Translate.
-        return this.translate(-eyeX, -eyeY, -eyeZ);
-    }
-    /**
-     * Multiply the viewing matrix from the right.
-     * @param eyeX, eyeY, eyeZ The position of the eye point.
-     * @param centerX, centerY, centerZ The position of the reference point.
-     * @param upX, upY, upZ The direction of the up vector.
-     * @return this
-     */
-    lookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
-        return this.concat(new Matrix4().setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ));
-    }
-    /**
-     * Multiply the matrix for project vertex to plane from the right.
-     * @param plane The array[A, B, C, D] of the equation of plane "Ax + By + Cz + D = 0".
-     * @param light The array which stored coordinates of the light. if light[3]=0, treated as parallel light.
-     * @return this
-     */
-    // prettier-ignore
-    dropShadow(plane, light) {
+	/**
+	 * Set the viewing matrix.
+	 * @param eyeX, eyeY, eyeZ The position of the eye point.
+	 * @param centerX, centerY, centerZ The position of the reference point.
+	 * @param upX, upY, upZ The direction of the up vector.
+	 * @return this
+	 */
+	setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
+		var e, fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz
+		fx = centerX - eyeX
+		fy = centerY - eyeY
+		fz = centerZ - eyeZ
+		// Normalize f.
+		rlf = 1 / Math.sqrt(fx * fx + fy * fy + fz * fz)
+		fx *= rlf
+		fy *= rlf
+		fz *= rlf
+		// Calculate cross product of f and up.
+		sx = fy * upZ - fz * upY
+		sy = fz * upX - fx * upZ
+		sz = fx * upY - fy * upX
+		// Normalize s.
+		rls = 1 / Math.sqrt(sx * sx + sy * sy + sz * sz)
+		sx *= rls
+		sy *= rls
+		sz *= rls
+		// Calculate cross product of s and f.
+		ux = sy * fz - sz * fy
+		uy = sz * fx - sx * fz
+		uz = sx * fy - sy * fx
+		// Set to this.
+		e = this.elements
+		e[0] = sx
+		e[1] = ux
+		e[2] = -fx
+		e[3] = 0
+		e[4] = sy
+		e[5] = uy
+		e[6] = -fy
+		e[7] = 0
+		e[8] = sz
+		e[9] = uz
+		e[10] = -fz
+		e[11] = 0
+		e[12] = 0
+		e[13] = 0
+		e[14] = 0
+		e[15] = 1
+		// Translate.
+		return this.translate(-eyeX, -eyeY, -eyeZ)
+	}
+	/**
+	 * Multiply the viewing matrix from the right.
+	 * @param eyeX, eyeY, eyeZ The position of the eye point.
+	 * @param centerX, centerY, centerZ The position of the reference point.
+	 * @param upX, upY, upZ The direction of the up vector.
+	 * @return this
+	 */
+	lookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
+		return this.concat(
+			new Matrix4().setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ),
+		)
+	}
+	/**
+	 * Multiply the matrix for project vertex to plane from the right.
+	 * @param plane The array[A, B, C, D] of the equation of plane "Ax + By + Cz + D = 0".
+	 * @param light The array which stored coordinates of the light. if light[3]=0, treated as parallel light.
+	 * @return this
+	 */
+	// prettier-ignore
+	dropShadow(plane, light) {
         var mat = new Matrix4();
         var e = mat.elements;
         var dot = plane[0] * light[0] + plane[1] * light[1] + plane[2] * light[2] + plane[3] * light[3];

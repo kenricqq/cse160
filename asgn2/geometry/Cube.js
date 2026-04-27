@@ -1,14 +1,14 @@
-"use strict";
+'use strict'
 // oxlint-disable typescript/no-extraneous-class
 // oxlint-disable no-unused-vars
 class Cube extends Geometry {
-    constructor() {
-        super();
-        this.positionSize = 3;
-        this.colorSize = 3;
-        this.floatsPerVertex = 6;
-        // prettier-ignore
-        this.vertices = new Float32Array([
+	constructor() {
+		super()
+		this.positionSize = 3
+		this.colorSize = 3
+		this.floatsPerVertex = 6
+		// prettier-ignore
+		this.vertices = new Float32Array([
             // Front face (z = 1)
             -0.5, -0.5, 0.5, 1.0, 0.0, 0.0,
             0.5, -0.5, 0.5, 1.0, 0.0, 0.0,
@@ -52,5 +52,5 @@ class Cube extends Geometry {
             0.5, -0.5, 0.5, 1.0, 0.0, 1.0,
             -0.5, -0.5, 0.5, 1.0, 0.0, 1.0,
         ]);
-    }
+	}
 }
