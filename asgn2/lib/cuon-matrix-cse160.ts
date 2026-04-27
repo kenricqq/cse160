@@ -35,7 +35,7 @@ class Vector3 {
 		d = this.elements
 
 		if (s === d) {
-			return
+			return this
 		}
 
 		for (i = 0; i < 3; ++i) {
@@ -165,7 +165,15 @@ class Vector3 {
 
 		const len = this.magnitude()
 
+		if (len === 0) {
+			return this
+		}
+
 		d = this.elements
+
+		if (len === 1) {
+			return this
+		}
 
 		for (i = 0; i < 3; ++i) {
 			d[i] /= len
@@ -244,7 +252,7 @@ class Matrix4 {
 		d = this.elements
 
 		if (s === d) {
-			return
+			return this
 		}
 
 		for (i = 0; i < 16; ++i) {
@@ -728,6 +736,9 @@ class Matrix4 {
     } else {
       // Rotation around another axis
       len = Math.sqrt(x*x + y*y + z*z);
+      if (len === 0) {
+        return this.setIdentity();
+      }
       if (len !== 1) {
         rlen = 1 / len;
         x *= rlen;

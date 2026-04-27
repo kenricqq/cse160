@@ -154,24 +154,22 @@ function main() {
 
 	// Event Listeners
 	const rotationSlider = getInput('rotationSlider')
-	rotationSlider.addEventListener('mouseup', function () {
+	rotationSlider.addEventListener('input', function () {
 		gAnimalGlobalRotation = Number(this.value) * 10
 	})
 
-	let cube1 = new Cube()
-	cube1.rotateY(135)
-	cube1.translate(0, -0.2, 0)
-	cube1.scale(0.5, 0.5, 0.5)
+	let head = new Cube()
+	head.translate(-0.45, -0.12, 0)
+	head.rotateY(135)
+	head.scale(0.42, 0.36, 0.38)
+	shapes.push(head)
 
-	shapes.push(cube1)
+	let body = new Cube()
+	body.translate(0, -0.25, 0)
+	body.rotateY(135)
+	body.scale(0.85, 0.35, 0.45)
 
-	// let cube2 = new Cube()
-	// cube2.translate(0, -0.2, 0)
-	// cube2.rotateX(30)
-	// cube2.rotateY(15)
-	// cube2.scale(0.5, 0.5, 1.3)
-
-	// shapes.push(cube2)
+	shapes.push(body)
 
 	// let tri1 = new Triangle()
 	// tri1.translate(0, -0.2, 0)
