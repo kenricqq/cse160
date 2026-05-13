@@ -16,6 +16,8 @@ class Geometry {
 	baseColor
 	texColorWeight
 	textureIndex
+	swirlAmount
+	reflectAmount
 
 	kind
 
@@ -35,6 +37,8 @@ class Geometry {
 		this.baseColor = [1, 1, 1, 1]
 		this.texColorWeight = 1
 		this.textureIndex = 0
+		this.swirlAmount = 0
+		this.reflectAmount = 0
 
 		this.kind = 'static'
 	}

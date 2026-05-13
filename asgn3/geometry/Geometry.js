@@ -15,6 +15,8 @@ class Geometry {
     baseColor;
     texColorWeight;
     textureIndex;
+    swirlAmount;
+    reflectAmount;
     kind;
     constructor() {
         this.vertices = new Float32Array([0, 0.3, -0.3, -0.3, 0.3, -0.3]);
@@ -30,6 +32,8 @@ class Geometry {
         this.baseColor = [1, 1, 1, 1];
         this.texColorWeight = 1;
         this.textureIndex = 0;
+        this.swirlAmount = 0;
+        this.reflectAmount = 0;
         this.kind = 'static';
     }
     translate(x, y, z) {

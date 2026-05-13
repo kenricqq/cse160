@@ -33,18 +33,33 @@ var FSHADER_SOURCE = `
 	uniform int u_TextureIndex;
 	uniform vec4 u_baseColor;
 	uniform float u_texColorWeight;
+	uniform float u_swirlAmount;
+	uniform float u_reflectAmount;
+
+	vec4 readTexture(vec2 uv) {
+		if (u_TextureIndex == 0) {
+			return texture2D(u_Sampler0, uv);
+		}
+		return texture2D(u_Sampler1, uv);
+	}
 
 	void main() {
 	  // gl_FragColor = v_Color;
-	  vec4 texColor;
-	  if (u_TextureIndex == 0) {
-			texColor = texture2D(u_Sampler0, v_UV);
-	  } else {
-			texColor = texture2D(u_Sampler1, v_UV);
-		}
-	  // gl_FragColor = texColor;
+	  vec2 centered = v_UV - vec2(0.5, 0.5);
+	  float radius = length(centered);
+	  float angle = u_swirlAmount * (1.0 - smoothstep(0.0, 0.75, radius));
+	  float s = sin(angle);
+	  float c = cos(angle);
+	  vec2 swirledUV = vec2(
+			centered.x * c - centered.y * s,
+			centered.x * s + centered.y * c
+	  ) + vec2(0.5, 0.5);
+	  swirledUV = clamp(swirledUV, 0.0, 1.0);
 
-	  // vec4 baseColor = vec4(0,1,0,1);
+	  vec4 texColor = readTexture(swirledUV);
+	  vec4 reflectedColor = readTexture(vec2(1.0 - swirledUV.x, swirledUV.y));
+	  float reflectionSide = smoothstep(0.45, 0.55, v_UV.x);
+	  texColor = mix(texColor, reflectedColor, reflectionSide * u_reflectAmount);
 
 		gl_FragColor = (1.0 - u_texColorWeight) * u_baseColor + u_texColorWeight * texColor;
 	}
@@ -54,6 +69,7 @@ let shapes: Geometry[] = []
 // oxlint-disable-next-line typescript/no-explicit-any
 let shaderVars: any
 let gAnimalGlobalRotation = 0
+let crazyEffectEnabled = false
 
 function loadWorld(
 	gl: WebGL2RenderingContextWithProgram,
@@ -79,6 +95,7 @@ function loadWorld(
 
 		gl.bindTexture(gl.TEXTURE_2D, texture0)
 
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img1)
@@ -93,6 +110,7 @@ function loadWorld(
 
 		gl.bindTexture(gl.TEXTURE_2D, texture1)
 
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img2)
@@ -188,6 +206,8 @@ function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry) {
 	gl.uniform4fv(shaderVars.u_baseColor, shape.baseColor)
 	gl.uniform1f(shaderVars.u_texColorWeight, shape.texColorWeight)
 	gl.uniform1i(shaderVars.u_TextureIndex, shape.textureIndex)
+	gl.uniform1f(shaderVars.u_swirlAmount, crazyEffectEnabled ? shape.swirlAmount : 0)
+	gl.uniform1f(shaderVars.u_reflectAmount, crazyEffectEnabled ? shape.reflectAmount : 0)
 
 	gl.drawArrays(gl.TRIANGLES, 0, n)
 	// gl.drawArrays(gl.LINE_LOOP, 0, n) // wireframe}
@@ -222,6 +242,10 @@ function keydown(ev: KeyboardEvent, camera: Camera, paused: boolean) {
 			break
 		case 'r':
 			deleteBlock(camera)
+			break
+		case 'x':
+			crazyEffectEnabled = !crazyEffectEnabled
+			console.log('crazy effect', crazyEffectEnabled ? 'on' : 'off')
 			break
 	}
 }
@@ -276,6 +300,8 @@ function buildWalls() {
 				wall.translate(x - map.length / 2, y, z - map.length / 2)
 				wall.textureIndex = 0
 				wall.texColorWeight = 1
+				wall.swirlAmount = (Math.random() * 2 - 1) * 1.8
+				wall.reflectAmount = Math.random() * 0.8
 				shapes.push(wall)
 			}
 		}
@@ -305,6 +331,8 @@ function main() {
 		u_TextureIndex: gl.getUniformLocation(gl.program, 'u_TextureIndex'),
 		u_baseColor: gl.getUniformLocation(gl.program, 'u_baseColor'),
 		u_texColorWeight: gl.getUniformLocation(gl.program, 'u_texColorWeight'),
+		u_swirlAmount: gl.getUniformLocation(gl.program, 'u_swirlAmount'),
+		u_reflectAmount: gl.getUniformLocation(gl.program, 'u_reflectAmount'),
 
 		u_viewMatrix: gl.getUniformLocation(gl.program, 'u_viewMatrix'),
 		u_projectionMatrix: gl.getUniformLocation(gl.program, 'u_projectionMatrix'),
@@ -320,6 +348,8 @@ function main() {
 	ground.rotateY(0)
 	ground.textureIndex = 1
 	ground.texColorWeight = 1
+	ground.swirlAmount = 0.15
+	ground.reflectAmount = 0.15
 
 	shapes.push(ground)
 
@@ -339,45 +369,44 @@ function main() {
 	let camera = new Camera(canvas.width / canvas.height, 0.1, 1000)
 	let pauseOverlay = document.getElementById('pauseOverlay')
 	let paused = false
-	let lastMouseX: number | null = null
 
 	function setPaused(nextPaused: boolean) {
 		paused = nextPaused
-		lastMouseX = null
 		pauseOverlay?.toggleAttribute('hidden', !paused)
 	}
+
+	function enterGame() {
+		setPaused(false)
+		canvas.requestPointerLock()
+	}
+
+	document.addEventListener('pointerlockchange', () => {
+		setPaused(document.pointerLockElement !== canvas)
+	})
 
 	document.addEventListener('keydown', (ev) => {
 		if (ev.key === 'Escape') {
 			setPaused(true)
+			document.exitPointerLock()
 			return
 		}
 
 		if (ev.key === ' ') {
 			ev.preventDefault()
-			if (paused) setPaused(false)
+			enterGame()
 			return
 		}
 
 		keydown(ev, camera, paused)
 	})
 
+	canvas.addEventListener('click', enterGame)
+
 	// Mouse
 	canvas.addEventListener('mousemove', (ev) => {
-		if (paused) {
-			lastMouseX = null
-			return
-		}
+		if (paused || document.pointerLockElement !== canvas) return
 
-		if (lastMouseX == null) {
-			lastMouseX = ev.clientX
-			return
-		}
-
-		const dx = ev.clientX - lastMouseX
-		lastMouseX = ev.clientX
-
-		camera.panRight(dx * 0.3)
+		camera.panRight(ev.movementX * 0.3)
 	})
 
 	loadWorld(gl, '../textures/brick.jpg', '../textures/rock.jpg', camera)
