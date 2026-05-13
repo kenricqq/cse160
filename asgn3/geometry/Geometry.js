@@ -12,6 +12,9 @@ class Geometry {
     uvSize;
     floatsPerVertex;
     vertexBuffer;
+    baseColor;
+    texColorWeight;
+    textureIndex;
     constructor() {
         this.vertices = new Float32Array([0, 0.3, -0.3, -0.3, 0.3, -0.3]);
         this.modelMatrix = new Matrix4();
@@ -23,6 +26,9 @@ class Geometry {
         this.uvSize = 2;
         this.floatsPerVertex = 2;
         this.vertexBuffer = null;
+        this.baseColor = [1, 1, 1, 1];
+        this.texColorWeight = 1;
+        this.textureIndex = 0;
     }
     translate(x, y, z) {
         this.translationMatrix.setTranslate(x, y, z);

@@ -28,48 +28,85 @@ var FSHADER_SOURCE = `
 	varying vec4 v_Color;
 	varying vec2 v_UV;
 
-	uniform sampler2D u_Sampler;
+	uniform sampler2D u_Sampler0;
+	uniform sampler2D u_Sampler1;
+	uniform int u_TextureIndex;
+	uniform vec4 u_baseColor;
+	uniform float u_texColorWeight;
 
 	void main() {
 	  // gl_FragColor = v_Color;
-	  vec4 texColor = texture2D(u_Sampler, v_UV);
+	  vec4 texColor;
+	  if (u_TextureIndex == 0) {
+			texColor = texture2D(u_Sampler0, v_UV);
+	  } else {
+			texColor = texture2D(u_Sampler1, v_UV);
+		}
 	  // gl_FragColor = texColor;
 
-	  vec4 baseColor = vec4(0,1,0,1);
+	  // vec4 baseColor = vec4(0,1,0,1);
 
-		// t = u_texColorWeight;
-		float t = 0.8;
-		gl_FragColor = (1.0 - t) * baseColor + t * texColor;
+		gl_FragColor = (1.0 - u_texColorWeight) * u_baseColor + u_texColorWeight * texColor;
 	}
 `
 
 let shapes: Geometry[] = []
+// oxlint-disable-next-line typescript/no-explicit-any
+let shaderVars: any
 let gAnimalGlobalRotation = 0
 
-function loadWorld(gl: WebGL2RenderingContextWithProgram, src: string, camera: Camera) {
-	var texture = gl.createTexture()
+function loadWorld(
+	gl: WebGL2RenderingContextWithProgram,
+	src1: string,
+	src2: string,
+	camera: Camera,
+) {
+	var texture0 = gl.createTexture()
+	var texture1 = gl.createTexture()
 
-	var img = new Image()
+	var img1 = new Image()
+	var img2 = new Image()
 
-	img.addEventListener('load', () => {
+	let loaded = 0
+
+	function markLoaded() {
+		loaded++
+		if (loaded === 2) animate(gl, camera)
+	}
+
+	img1.addEventListener('load', () => {
 		gl.activeTexture(gl.TEXTURE0)
 
-		gl.bindTexture(gl.TEXTURE_2D, texture)
+		gl.bindTexture(gl.TEXTURE_2D, texture0)
 
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img)
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img1)
 
-		let u_Sampler = gl.getUniformLocation(gl.program, 'u_Sampler')
-		gl.uniform1i(u_Sampler, 0)
+		gl.uniform1i(shaderVars.u_Sampler0, 0)
 
-		animate(gl, camera)
+		markLoaded()
 	})
 
-	img.src = src
+	img2.addEventListener('load', () => {
+		gl.activeTexture(gl.TEXTURE1)
+
+		gl.bindTexture(gl.TEXTURE_2D, texture1)
+
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img2)
+
+		gl.uniform1i(shaderVars.u_Sampler1, 1)
+
+		markLoaded()
+	})
+
+	img1.src = src1
+	img2.src = src2
 }
 
-function initVertexBuffers(gl: WebGL2RenderingContextWithProgram, shape: Geometry, camera: Camera) {
+function initVertexBuffers(gl: WebGL2RenderingContextWithProgram, shape: Geometry) {
 	var n = shape.vertices.length / shape.floatsPerVertex // The number of vertices
 
 	if (!shape.vertexBuffer) {
@@ -91,45 +128,28 @@ function initVertexBuffers(gl: WebGL2RenderingContextWithProgram, shape: Geometr
 	const FLOAT_SIZE = Float32Array.BYTES_PER_ELEMENT
 	const stride = shape.floatsPerVertex * FLOAT_SIZE
 
-	let a_Position = gl.getAttribLocation(gl.program, 'a_Position')
-	if (a_Position < 0) {
-		console.log('Failed to get the storage location of a_Position')
-		return -1
-	}
-	gl.vertexAttribPointer(a_Position, shape.positionSize, gl.FLOAT, false, stride, 0)
-	gl.enableVertexAttribArray(a_Position)
+	gl.vertexAttribPointer(shaderVars.a_Position, shape.positionSize, gl.FLOAT, false, stride, 0)
+	gl.enableVertexAttribArray(shaderVars.a_Position)
 
-	let a_Color = gl.getAttribLocation(gl.program, 'a_Color')
-	if (a_Color < 0) {
-		console.log('Failed to get the storage location of a_Color')
-		return -1
-	}
 	gl.vertexAttribPointer(
-		a_Color,
+		shaderVars.a_Color,
 		shape.colorSize,
 		gl.FLOAT,
 		false,
 		stride,
 		shape.positionSize * FLOAT_SIZE,
 	)
-	gl.enableVertexAttribArray(a_Color)
+	gl.enableVertexAttribArray(shaderVars.a_Color)
 
-	let a_UV = gl.getAttribLocation(gl.program, 'a_UV')
 	gl.vertexAttribPointer(
-		a_UV,
+		shaderVars.a_UV,
 		2,
 		gl.FLOAT,
 		false,
 		stride,
 		(shape.positionSize + shape.colorSize) * FLOAT_SIZE,
 	)
-	gl.enableVertexAttribArray(a_UV)
-
-	let u_viewMatrix = gl.getUniformLocation(gl.program, 'u_viewMatrix')
-	gl.uniformMatrix4fv(u_viewMatrix, false, camera.viewMatrix.elements)
-
-	let u_projectionMatrix = gl.getUniformLocation(gl.program, 'u_projectionMatrix')
-	gl.uniformMatrix4fv(u_projectionMatrix, false, camera.projectionMatrix.elements)
+	gl.enableVertexAttribArray(shaderVars.a_UV)
 
 	return n
 }
@@ -137,18 +157,22 @@ function initVertexBuffers(gl: WebGL2RenderingContextWithProgram, shape: Geometr
 function animate(gl: WebGL2RenderingContextWithProgram, camera: Camera) {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+	gl.uniformMatrix4fv(shaderVars.u_viewMatrix, false, camera.viewMatrix.elements)
+
+	gl.uniformMatrix4fv(shaderVars.u_projectionMatrix, false, camera.projectionMatrix.elements)
+
 	gAnimalGlobalRotation += 1
 	for (let s of shapes) {
 		// s.rotateY(gAnimalGlobalRotation)
-		draw(gl, s, camera)
+		draw(gl, s)
 	}
 
 	requestAnimationFrame(() => animate(gl, camera))
 }
 
-function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry, camera: Camera) {
+function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry) {
 	// Write the positions of vertices to a vertex shader
-	let n = initVertexBuffers(gl, shape, camera)
+	let n = initVertexBuffers(gl, shape)
 	if (n < 0) {
 		console.log('Failed to set the positions of the vertices')
 		return
@@ -159,8 +183,11 @@ function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry, camera: Ca
 		.multiply(shape.rotationMatrix)
 		.multiply(shape.scaleMatrix)
 
-	let u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
-	gl.uniformMatrix4fv(u_ModelMatrix, false, shape.modelMatrix.elements)
+	gl.uniformMatrix4fv(shaderVars.u_ModelMatrix, false, shape.modelMatrix.elements)
+
+	gl.uniform4fv(shaderVars.u_baseColor, shape.baseColor)
+	gl.uniform1f(shaderVars.u_texColorWeight, shape.texColorWeight)
+	gl.uniform1i(shaderVars.u_TextureIndex, shape.textureIndex)
 
 	gl.drawArrays(gl.TRIANGLES, 0, n)
 	// gl.drawArrays(gl.LINE_LOOP, 0, n) // wireframe}
@@ -203,6 +230,23 @@ function main() {
 		return -1
 	}
 
+	shaderVars = {
+		a_Position: gl.getAttribLocation(gl.program, 'a_Position'),
+		a_Color: gl.getAttribLocation(gl.program, 'a_Color'),
+		a_UV: gl.getAttribLocation(gl.program, 'a_UV'),
+
+		u_Sampler0: gl.getUniformLocation(gl.program, 'u_Sampler0'),
+		u_Sampler1: gl.getUniformLocation(gl.program, 'u_Sampler1'),
+
+		u_TextureIndex: gl.getUniformLocation(gl.program, 'u_TextureIndex'),
+		u_baseColor: gl.getUniformLocation(gl.program, 'u_baseColor'),
+		u_texColorWeight: gl.getUniformLocation(gl.program, 'u_texColorWeight'),
+
+		u_viewMatrix: gl.getUniformLocation(gl.program, 'u_viewMatrix'),
+		u_projectionMatrix: gl.getUniformLocation(gl.program, 'u_projectionMatrix'),
+		u_ModelMatrix: gl.getUniformLocation(gl.program, 'u_ModelMatrix'),
+	}
+
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// GROUND and SKY
@@ -210,12 +254,16 @@ function main() {
 	ground.translate(0, -0.5, 0)
 	ground.scale(32, 0.1, 32)
 	ground.rotateY(0)
+	ground.textureIndex = 1
+	ground.texColorWeight = 1
 
 	shapes.push(ground)
 
 	let sky = new Cube()
 	// sky.translate(0,0,0)
 	sky.scale(1000, 1000, 1000)
+	sky.baseColor = [0.3, 0.6, 1.0, 1.0]
+	sky.texColorWeight = 0
 
 	shapes.push(sky)
 
@@ -226,10 +274,12 @@ function main() {
 			let height = map[x][z]
 
 			for (let y = 0; y < height; y++) {
-				let w = new Cube()
-				w.translate(x - map.length / 2, y, z - map.length / 2)
+				let wall = new Cube()
+				wall.translate(x - map.length / 2, y, z - map.length / 2)
+				wall.textureIndex = 0
+				wall.texColorWeight = 1
+				shapes.push(wall)
 				// walls.push(w)
-				shapes.push(w)
 			}
 		}
 	}
@@ -242,7 +292,22 @@ function main() {
 		keydown(ev, camera)
 	})
 
-	loadWorld(gl, '../textures/town.png', camera)
+	// Mouse
+	let lastMouseX: number | null = null
+
+	canvas.addEventListener('mousemove', (ev) => {
+		if (lastMouseX == null) {
+			lastMouseX = ev.clientX
+			return
+		}
+
+		const dx = ev.clientX - lastMouseX
+		lastMouseX = ev.clientX
+
+		camera.panRight(dx * 0.3)
+	})
+
+	loadWorld(gl, '../textures/brick.jpg', '../textures/rock.jpg', camera)
 }
 
 window.addEventListener('load', main)
