@@ -35,7 +35,7 @@ class Vector3 {
 		d = this.elements
 
 		if (s === d) {
-			return
+			return this
 		}
 
 		for (i = 0; i < 3; ++i) {

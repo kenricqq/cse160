@@ -28,7 +28,7 @@ class Vector3 {
         s = src.elements;
         d = this.elements;
         if (s === d) {
-            return;
+            return this;
         }
         for (i = 0; i < 3; ++i) {
             d[i] = s[i];
