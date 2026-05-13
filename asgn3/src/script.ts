@@ -50,11 +50,8 @@ function loadWorld(gl: WebGL2RenderingContextWithProgram, src: string, camera: C
 	var texture = gl.createTexture()
 
 	var img = new Image()
-	img.src = src
 
-	img.onload = function () {
-		console.log('../textures/town.png', img)
-
+	img.addEventListener('load', () => {
 		gl.activeTexture(gl.TEXTURE0)
 
 		gl.bindTexture(gl.TEXTURE_2D, texture)
@@ -67,7 +64,9 @@ function loadWorld(gl: WebGL2RenderingContextWithProgram, src: string, camera: C
 		gl.uniform1i(u_Sampler, 0)
 
 		animate(gl, camera)
-	}
+	})
+
+	img.src = src
 }
 
 function initVertexBuffers(gl: WebGL2RenderingContextWithProgram, shape: Geometry, camera: Camera) {
@@ -165,25 +164,27 @@ function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry, camera: Ca
 	shape.modelMatrix.setIdentity()
 }
 
-function keydown(ev: KeyboardEvent, gl: WebGL2RenderingContextWithProgram, camera: Camera) {
-	if (ev.keyCode == 87) {
-		// w
-		camera.eye.elements[2] += 0.01
-		camera.updateView()
-	} else if (ev.keyCode == 83) {
-		// s
-		console.log('ev', ev)
-		camera.eye.elements[2] -= 0.01
-		camera.updateView()
-	} else {
-		// q: 81
-		// a: 65
-		// e: 69
-		// d: 68
-		return
+function keydown(ev: KeyboardEvent, camera: Camera) {
+	switch (ev.key) {
+		case 'w':
+			camera.moveForward(0.05)
+			break
+		case 'a':
+			camera.moveLeft(0.05)
+			break
+		case 's':
+			camera.moveBackwards(0.05)
+			break
+		case 'd':
+			camera.moveRight(0.05)
+			break
+		case 'q':
+			camera.panLeft(5)
+			break
+		case 'e':
+			camera.panRight(5)
+			break
 	}
-
-	loadWorld(gl, '../textures/town.png', camera)
 }
 
 // oxlint-disable-next-line no-unused-vars
@@ -200,34 +201,42 @@ function main() {
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	let cube1 = new Cube()
-	cube1.rotateY(45)
-	cube1.translate(0, 0.2, 0)
+	// GROUND and SKY
+	let ground = new Cube()
+	ground.translate(0, -0.5, 0)
+	ground.scale(32, 0.1, 32)
+	ground.rotateY(0)
 
-	// shapes.push(cube1)
+	shapes.push(ground)
 
-	let tri1 = new Triangle()
-	tri1.translate(0, 0.5, 0)
-	tri1.rotateY(0)
+	let sky = new Cube()
+	// sky.translate(0,0,0)
+	sky.scale(1000, 1000, 1000)
 
-	shapes.push(tri1)
+	shapes.push(sky)
 
-	let square = new Square()
-	square.translate(0, -0.3, 0)
-	square.scale(0.3, 0.3, 0.5)
-	square.rotateY(0)
+	// WALL
+	// let walls = []
+	for (let x = 0; x < map.length; x++) {
+		for (let z = 0; z < map.length; z++) {
+			let height = map[x][z]
 
-	shapes.push(square)
-
-	// animate(gl)
+			for (let y = 0; y < height; y++) {
+				let w = new Cube()
+				w.translate(x - map.length / 2, y, z - map.length / 2)
+				// walls.push(w)
+				shapes.push(w)
+			}
+		}
+	}
 
 	// Camera
 	let canvas = getCanvas()
 	let camera = new Camera(canvas.width / canvas.height, 0.1, 1000)
 
-	document.onkeydown = function (ev) {
-		keydown(ev, gl, camera)
-	}
+	document.addEventListener('keydown', (ev) => {
+		keydown(ev, camera)
+	})
 
 	loadWorld(gl, '../textures/town.png', camera)
 }
