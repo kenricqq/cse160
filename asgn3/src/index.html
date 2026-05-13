@@ -56,6 +56,29 @@
 				vertical-align: middle;
 			}
 			
+			.pause-overlay {
+				position: fixed;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: rgba(0, 0, 0, 0.6);
+				color: white;
+				text-align: center;
+				z-index: 10;
+			}
+
+			.pause-menu {
+				padding: 2rem 3rem;
+				border: 2px solid white;
+				border-radius: 0.5rem;
+				background: rgba(0, 0, 0, 0.8);
+			}
+
+			.pause-menu h1 {
+				margin: 0 0 0.5rem;
+			}
+
 			[hidden] {
 				display: none !important;
 			}
@@ -69,6 +92,15 @@
 	</head>
 
 	<body>
+		WASD to move. Q/E to turn camera. F/R to add/remove blocks.
+
+		<div id="pauseOverlay" class="pause-overlay" hidden>
+			<div class="pause-menu">
+				<h1>Paused</h1>
+				<p>Press Space to enter</p>
+			</div>
+		</div>
+
 		<canvas id="webgl" width="1200" height="1000">
 			Please use a browser that supports "canvas"
 		</canvas>

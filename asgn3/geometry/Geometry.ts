@@ -17,6 +17,8 @@ class Geometry {
 	texColorWeight
 	textureIndex
 
+	kind
+
 	constructor() {
 		this.vertices = new Float32Array([0, 0.3, -0.3, -0.3, 0.3, -0.3])
 		this.modelMatrix = new Matrix4()
@@ -33,6 +35,8 @@ class Geometry {
 		this.baseColor = [1, 1, 1, 1]
 		this.texColorWeight = 1
 		this.textureIndex = 0
+
+		this.kind = 'static'
 	}
 
 	translate(x: number, y: number, z: number) {

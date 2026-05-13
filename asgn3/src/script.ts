@@ -195,7 +195,9 @@ function draw(gl: WebGL2RenderingContextWithProgram, shape: Geometry) {
 	shape.modelMatrix.setIdentity()
 }
 
-function keydown(ev: KeyboardEvent, camera: Camera) {
+function keydown(ev: KeyboardEvent, camera: Camera, paused: boolean) {
+	if (paused) return
+
 	switch (ev.key) {
 		case 'w':
 			camera.moveForward(0.05)
@@ -215,6 +217,68 @@ function keydown(ev: KeyboardEvent, camera: Camera) {
 		case 'e':
 			camera.panRight(5)
 			break
+		case 'f':
+			addBlock(camera)
+			break
+		case 'r':
+			deleteBlock(camera)
+			break
+	}
+}
+
+function addBlock(camera: Camera) {
+	let { mapX, mapZ } = getCellInFront(camera)
+
+	if (mapX < 0 || mapX >= map.length) return
+	if (mapZ < 0 || mapZ >= map[mapX].length) return
+
+	map[mapX][mapZ] = Math.min(map[mapX][mapZ] + 1, 4)
+	buildWalls()
+}
+
+function deleteBlock(camera: Camera) {
+	let { mapX, mapZ } = getCellInFront(camera)
+
+	if (mapX < 0 || mapX >= map.length) return
+	if (mapZ < 0 || mapZ >= map[mapX].length) return
+
+	map[mapX][mapZ] = Math.max(map[mapX][mapZ] - 1, 0)
+	buildWalls()
+}
+
+function getCellInFront(camera: Camera) {
+	let fx = camera.at.elements[0] - camera.eye.elements[0]
+	let fz = camera.at.elements[2] - camera.eye.elements[2]
+
+	let len = Math.sqrt(fx * fx + fz * fz)
+	fx /= len
+	fz /= len
+
+	let worldX = camera.eye.elements[0] + fx * 2
+	let worldZ = camera.eye.elements[2] + fz * 2
+
+	let mapX = Math.round(worldX + map.length / 2)
+	let mapZ = Math.round(worldZ + map.length / 2)
+
+	return { mapX, mapZ }
+}
+
+function buildWalls() {
+	shapes = shapes.filter((shape) => shape.kind !== 'wall')
+
+	for (let x = 0; x < map.length; x++) {
+		for (let z = 0; z < map[x].length; z++) {
+			let height = map[x][z]
+
+			for (let y = 0; y < height; y++) {
+				let wall = new Cube()
+				wall.kind = 'wall'
+				wall.translate(x - map.length / 2, y, z - map.length / 2)
+				wall.textureIndex = 0
+				wall.texColorWeight = 1
+				shapes.push(wall)
+			}
+		}
 	}
 }
 
@@ -268,34 +332,43 @@ function main() {
 	shapes.push(sky)
 
 	// WALL
-	// let walls = []
-	for (let x = 0; x < map.length; x++) {
-		for (let z = 0; z < map[x].length; z++) {
-			let height = map[x][z]
-
-			for (let y = 0; y < height; y++) {
-				let wall = new Cube()
-				wall.translate(x - map.length / 2, y, z - map.length / 2)
-				wall.textureIndex = 0
-				wall.texColorWeight = 1
-				shapes.push(wall)
-				// walls.push(w)
-			}
-		}
-	}
+	buildWalls()
 
 	// Camera
 	let canvas = getCanvas()
 	let camera = new Camera(canvas.width / canvas.height, 0.1, 1000)
+	let pauseOverlay = document.getElementById('pauseOverlay')
+	let paused = false
+	let lastMouseX: number | null = null
+
+	function setPaused(nextPaused: boolean) {
+		paused = nextPaused
+		lastMouseX = null
+		pauseOverlay?.toggleAttribute('hidden', !paused)
+	}
 
 	document.addEventListener('keydown', (ev) => {
-		keydown(ev, camera)
+		if (ev.key === 'Escape') {
+			setPaused(true)
+			return
+		}
+
+		if (ev.key === ' ') {
+			ev.preventDefault()
+			if (paused) setPaused(false)
+			return
+		}
+
+		keydown(ev, camera, paused)
 	})
 
 	// Mouse
-	let lastMouseX: number | null = null
-
 	canvas.addEventListener('mousemove', (ev) => {
+		if (paused) {
+			lastMouseX = null
+			return
+		}
+
 		if (lastMouseX == null) {
 			lastMouseX = ev.clientX
 			return
