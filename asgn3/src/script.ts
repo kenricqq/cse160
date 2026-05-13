@@ -72,17 +72,21 @@ function loadWorld(gl: WebGL2RenderingContextWithProgram, src: string, camera: C
 function initVertexBuffers(gl: WebGL2RenderingContextWithProgram, shape: Geometry, camera: Camera) {
 	var n = shape.vertices.length / shape.floatsPerVertex // The number of vertices
 
-	// Create a buffer object
-	var vertexBuffer = gl.createBuffer()
-	if (!vertexBuffer) {
-		console.log('Failed to create the buffer object')
-		return -1
-	}
+	if (!shape.vertexBuffer) {
+		// Create a buffer object
+		shape.vertexBuffer = gl.createBuffer()
+		if (!shape.vertexBuffer) {
+			console.log('Failed to create the buffer object')
+			return -1
+		}
 
-	// Bind the buffer object to target
-	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-	// Write date into the buffer object
-	gl.bufferData(gl.ARRAY_BUFFER, shape.vertices, gl.STATIC_DRAW)
+		// Bind the buffer object to target
+		gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer)
+		// Write date into the buffer object
+		gl.bufferData(gl.ARRAY_BUFFER, shape.vertices, gl.STATIC_DRAW)
+	} else {
+		gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer)
+	}
 
 	const FLOAT_SIZE = Float32Array.BYTES_PER_ELEMENT
 	const stride = shape.floatsPerVertex * FLOAT_SIZE
@@ -218,7 +222,7 @@ function main() {
 	// WALL
 	// let walls = []
 	for (let x = 0; x < map.length; x++) {
-		for (let z = 0; z < map.length; z++) {
+		for (let z = 0; z < map[x].length; z++) {
 			let height = map[x][z]
 
 			for (let y = 0; y < height; y++) {

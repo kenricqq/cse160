@@ -11,6 +11,7 @@ class Geometry {
 	colorSize
 	uvSize
 	floatsPerVertex
+	vertexBuffer: WebGLBuffer | null
 
 	constructor() {
 		this.vertices = new Float32Array([0, 0.3, -0.3, -0.3, 0.3, -0.3])
@@ -23,6 +24,7 @@ class Geometry {
 		this.colorSize = 0
 		this.uvSize = 2
 		this.floatsPerVertex = 2
+		this.vertexBuffer = null
 	}
 
 	translate(x: number, y: number, z: number) {

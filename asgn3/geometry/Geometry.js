@@ -11,6 +11,7 @@ class Geometry {
     colorSize;
     uvSize;
     floatsPerVertex;
+    vertexBuffer;
     constructor() {
         this.vertices = new Float32Array([0, 0.3, -0.3, -0.3, 0.3, -0.3]);
         this.modelMatrix = new Matrix4();
@@ -21,6 +22,7 @@ class Geometry {
         this.colorSize = 0;
         this.uvSize = 2;
         this.floatsPerVertex = 2;
+        this.vertexBuffer = null;
     }
     translate(x, y, z) {
         this.translationMatrix.setTranslate(x, y, z);
