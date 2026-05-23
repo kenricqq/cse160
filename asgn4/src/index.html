@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Change a point color</title>
+		<script src="../lib/webgl-utils.js"></script>
+		<script src="../lib/webgl-debug.js"></script>
+		<script src="../lib/cuon-utils.js"></script>
+		<script src="../lib/cuon-matrix-cse160.js"></script>
+		<script src="../lib/webgl-helpers.js"></script>
+		<script src="../geometry/Geometry.js"></script>
+		<script src="../geometry/Triangle.js"></script>
+		<script src="../geometry/Square.js"></script>
+		<script src="../geometry/Cube.js"></script>
+		<script src="map.js"></script>
+		<script src="camera.js"></script>
+		<script src="script.js"></script>
+		<style>
+			body {
+				margin: 1rem;
+				font-family: 'Trebuchet MS', 'Gill Sans', sans-serif;
+			}
+			
+			canvas,
+			#refImg {
+				display: block;
+				margin-bottom: 1rem;
+			}
+			
+			.control-panel {
+				max-width: 900px;
+			}
+			
+			.control-group {
+				padding: 0.8rem 1rem;
+				margin: 0 0 0.75rem;
+				border-radius: 0.3rem;
+				border: 1px solid #000000;
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+			}
+			
+			h4 {
+				margin: 0 0 0.5rem;
+			}
+			
+			button {
+				margin: 0.1rem 0.35rem 0.1rem 0;
+			}
+			
+			label {
+				margin-right: 0.3rem;
+			}
+			
+			input[type='range'] {
+				margin: 0 0.75rem 0 0;
+				vertical-align: middle;
+			}
+			
+			.pause-overlay {
+				position: fixed;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: rgba(0, 0, 0, 0.6);
+				color: white;
+				text-align: center;
+				z-index: 10;
+			}
+			
+			.pause-menu {
+				padding: 2rem 3rem;
+				border: 2px solid white;
+				border-radius: 0.5rem;
+				background: rgba(0, 0, 0, 0.8);
+			}
+			
+			.pause-menu h1 {
+				margin: 0 0 0.5rem;
+			}
+			
+			[hidden] {
+				display: none !important;
+			}
+			
+			@media (prefers-reduced-motion: reduce) {
+				button {
+					transition: none;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		WASD to move. Q/E to turn camera. F/R to add/remove blocks. Esc to pause. X for craziness.
+
+		<div id="pauseOverlay" class="pause-overlay" hidden>
+			<div class="pause-menu">
+				<h1>Paused</h1>
+				<p>Press Space or click the scene to enter</p>
+			</div>
+		</div>
+
+		<canvas id="webgl" width="1200" height="1000">
+			Please use a browser that supports "canvas"
+		</canvas>
+
+		<!-- <div class="control-panel">
+			<div class="control-group">
+				<button id="clearCanvas">Clear Canvas</button>
+			</div>
+
+			<div class="control-group">
+				<h4>Shape Color:</h4>
+				<label for="redSlider">Red</label>
+				<input type="range" id="redSlider" name="redSlider" min="0" max="20">
+				<label for="greenSlider">Green</label>
+				<input type="range" id="greenSlider" name="greenSlider" min="0" max="20">
+				<label for="blueSlider">Blue</label>
+				<input type="range" id="blueSlider" name="blueSlider" min="0" max="20">
+			</div>
+		</div> -->
+	</body>
+</html>
