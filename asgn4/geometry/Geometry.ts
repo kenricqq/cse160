@@ -10,14 +10,14 @@ class Geometry {
 	positionSize
 	colorSize
 	uvSize
+	normalSize
 	floatsPerVertex
 	vertexBuffer: WebGLBuffer | null
 
 	baseColor
 	texColorWeight
 	textureIndex
-	swirlAmount
-	reflectAmount
+	unlit
 
 	kind
 
@@ -31,14 +31,14 @@ class Geometry {
 		this.positionSize = 2
 		this.colorSize = 0
 		this.uvSize = 2
+		this.normalSize = 3
 		this.floatsPerVertex = 2
 		this.vertexBuffer = null
 
 		this.baseColor = [1, 1, 1, 1]
 		this.texColorWeight = 1
 		this.textureIndex = 0
-		this.swirlAmount = 0
-		this.reflectAmount = 0
+		this.unlit = false
 
 		this.kind = 'static'
 	}
